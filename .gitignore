@@ -1,0 +1,24 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Ambiente
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Editores e sistema
+.DS_Store
+.idea/
+.vscode/
