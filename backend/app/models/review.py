@@ -32,8 +32,8 @@ class Review(TimestampMixin, db.Model):
     user_id = db.Column(
         PK, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    work_id = db.Column(
-        PK, ForeignKey("works.id", ondelete="CASCADE"), nullable=False
+    book_id = db.Column(
+        PK, ForeignKey("books.id", ondelete="CASCADE"), nullable=False
     )
     # [AC2] o comentario/resenha
     body = db.Column(Text)
@@ -46,16 +46,16 @@ class Review(TimestampMixin, db.Model):
     consumed_on = db.Column(Date)
 
     user = relationship("User", back_populates="reviews")
-    work = relationship("Work", back_populates="reviews")
+    book = relationship("Book", back_populates="reviews")
     comments = relationship(
         "Comment", back_populates="review", cascade="all, delete-orphan"
     )
 
     __table_args__ = (
-        # Regra central do produto: 1 avaliacao por usuario por obra.
+        # Regra central do produto: 1 avaliacao por usuario por livro.
         # A segunda tentativa deve virar EDICAO, nao um registro novo.
-        UniqueConstraint("user_id", "work_id", name="uq_reviews_user_work"),
-        Index("idx_reviews_work_created", "work_id", "created_at"),
+        UniqueConstraint("user_id", "book_id", name="uq_reviews_user_book"),
+        Index("idx_reviews_book_created", "book_id", "created_at"),
         CheckConstraint(
             "rating IS NULL OR "
             "(rating >= 0.5 AND rating <= 5.0 AND MOD(rating * 10, 5) = 0)",

@@ -14,10 +14,7 @@ from flask import Flask
 from werkzeug.security import generate_password_hash
 
 from app.extensions import db
-from app.models import (
-    BookDetails, Comment, Favorite, Genre, Person, Review, User, Work,
-    WorkCredit, WorkGenre,
-)
+from app.models import Author, Book, Comment, Favorite, Genre, Review, User
 
 GENEROS = [
     ("Ficção Científica", "ficcao-cientifica"),
@@ -88,40 +85,29 @@ def _seed() -> None:
         ),
     )
 
-    obras = {}
+    livros = {}
     for item in LIVROS:
-        obra, novo = _get_or_create(
-            Work, slug=item["slug"],
+        autor, _ = _get_or_create(
+            Author, slug=item["autor"].lower().replace(" ", "-"),
+            defaults=dict(name=item["autor"]),
+        )
+        genero = db.session.query(Genre).filter_by(slug=item["genero"]).one()
+        livro, _ = _get_or_create(
+            Book, slug=item["slug"],
             defaults=dict(
-                type="book", title=item["title"],
-                original_title=item["original_title"],
-                release_year=item["release_year"],
-                synopsis=item["synopsis"], created_by=admin.id,
+                title=item["title"], original_title=item["original_title"],
+                release_year=item["release_year"], synopsis=item["synopsis"],
+                isbn13=item["isbn13"], publisher=item["publisher"],
+                page_count=item["pages"], language="Portugu\u00eas",
+                author_id=autor.id, genre_id=genero.id, created_by=admin.id,
             ),
         )
-        obras[item["slug"]] = obra
-        if novo:
-            db.session.add(BookDetails(
-                work_id=obra.id, isbn13=item["isbn13"],
-                publisher=item["publisher"], page_count=item["pages"],
-                language="Português",
-            ))
-            autor_slug = item["autor"].lower().replace(" ", "-")
-            pessoa, _ = _get_or_create(
-                Person, slug=autor_slug, defaults=dict(name=item["autor"])
-            )
-            db.session.add(WorkCredit(
-                work_id=obra.id, person_id=pessoa.id, role="author"
-            ))
-            genero = db.session.query(Genre).filter_by(
-                slug=item["genero"]
-            ).one()
-            db.session.add(WorkGenre(work_id=obra.id, genre_id=genero.id))
+        livros[item["slug"]] = livro
 
     db.session.flush()
 
     r1, novo = _get_or_create(
-        Review, user_id=ana.id, work_id=obras["duna-1965"].id,
+        Review, user_id=ana.id, book_id=livros["duna-1965"].id,
         defaults=dict(
             rating=Decimal("4.5"),
             body="Começo lento, mas a construção de mundo compensa tudo.",
@@ -135,7 +121,7 @@ def _seed() -> None:
         ))
 
     _get_or_create(
-        Review, user_id=bruno.id, work_id=obras["torto-arado-2019"].id,
+        Review, user_id=bruno.id, book_id=livros["torto-arado-2019"].id,
         defaults=dict(
             rating=Decimal("5.0"),
             body="A troca de narradora no meio do livro muda tudo.",
@@ -144,11 +130,11 @@ def _seed() -> None:
     )
     # Avaliacao so com texto, sem nota — o caso que a AC2 precisa suportar.
     _get_or_create(
-        Review, user_id=ana.id, work_id=obras["o-conto-da-aia-1985"].id,
+        Review, user_id=ana.id, book_id=livros["o-conto-da-aia-1985"].id,
         defaults=dict(body="Ainda estou lendo, mas já recomendo."),
     )
 
-    _get_or_create(Favorite, user_id=ana.id, work_id=obras["duna-1965"].id)
+    _get_or_create(Favorite, user_id=ana.id, book_id=livros["duna-1965"].id)
 
     db.session.commit()
 
@@ -161,8 +147,8 @@ def register_cli(app: Flask) -> None:
         """Popula o banco com dados de desenvolvimento."""
         if reset:
             # Ordem inversa das dependencias para os FKs nao reclamarem.
-            for model in (Favorite, Comment, Review, WorkGenre, WorkCredit,
-                          BookDetails, Work, Genre, Person, User):
+            for model in (Favorite, Comment, Review, Book, Author, Genre,
+                          User):
                 db.session.query(model).delete()
             db.session.commit()
             click.echo("Dados anteriores removidos.")

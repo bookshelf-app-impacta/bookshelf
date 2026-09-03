@@ -7,7 +7,7 @@ from app.models.base import PK
 
 
 class Favorite(db.Model):
-    """A PK composta (user_id, work_id) e o que impede favoritar duas
+    """A PK composta (user_id, book_id) e o que impede favoritar duas
     vezes o mesmo livro. Nao precisa de coluna `id` nem de validacao no
     codigo — o banco ja recusa o INSERT duplicado."""
 
@@ -16,10 +16,10 @@ class Favorite(db.Model):
     user_id = db.Column(
         PK, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
-    work_id = db.Column(
-        PK, ForeignKey("works.id", ondelete="CASCADE"), primary_key=True
+    book_id = db.Column(
+        PK, ForeignKey("books.id", ondelete="CASCADE"), primary_key=True
     )
     created_at = db.Column(DateTime, nullable=False, server_default=func.now())
 
     # Consultar "quem favoritou este livro" usa o indice que o MySQL cria
-    # sozinho para a FK de work_id. Nao precisa de Index explicito.
+    # sozinho para a FK de book_id. Nao precisa de Index explicito.

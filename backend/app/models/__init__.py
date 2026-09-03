@@ -8,19 +8,16 @@ enxerga o que estiver registrado no metadata, e se voce esquecer, o
 
 from app.models.base import TimestampMixin
 from app.models.user import User
-from app.models.work import BookDetails, Genre, Person, Work, WorkCredit, WorkGenre
+from app.models.book import Author, Book, Genre
 from app.models.review import Comment, Review, ReviewLike
 from app.models.favorite import Favorite
 
 __all__ = [
     "TimestampMixin",
     "User",
-    "Work",
-    "BookDetails",
+    "Book",
+    "Author",
     "Genre",
-    "WorkGenre",
-    "Person",
-    "WorkCredit",
     "Review",
     "Comment",
     "ReviewLike",
