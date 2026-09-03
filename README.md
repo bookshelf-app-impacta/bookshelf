@@ -2,7 +2,7 @@
 
 Rede social de livros desenvolvida na disciplina de **Projeto de Software**.
 
-Usuários cadastram livros, avaliam com nota e comentário e montam sua lista de favoritos.
+O administrador cadastra os livros. Usuários avaliam com nota e comentário e montam sua lista de favoritos.
 
 ## Stack
 
@@ -20,7 +20,7 @@ O repositório está na fase de esqueleto. As pastas e o banco estão prontos; o
 - [x] MySQL via Docker Compose
 - [ ] Backend Flask
 - [ ] Frontend Next.js
-- [ ] Modelagem do banco
+- [x] Modelagem do banco
 
 ## Como subir o banco
 
@@ -63,6 +63,7 @@ docs/       documentação do projeto
 
 - [Entregas e cronograma](docs/ENTREGAS.md)
 - [Fluxo de trabalho no Git](docs/GIT-WORKFLOW.md)
+- [Banco de dados](docs/BANCO-DE-DADOS.md)
 
 ## Equipe
 
