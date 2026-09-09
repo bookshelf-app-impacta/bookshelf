@@ -36,6 +36,13 @@ export default function UsuariosPage() {
     // POST /users
   }
 
+  function handleToggleActive(user: User) {
+  setUsers((prev) =>
+    prev.map((u) => (u.id === user.id ? { ...u, isActive: !u.isActive } : u))
+  );
+  // depois: PATCH /users/:id/status (ou rota equivalente, a combinar com o backend)
+}
+
   function handleEditSave(userAtualizado: User) {
     setUsers((prev) => prev.map((u) => (u.id === userAtualizado.id ? userAtualizado : u)));
     // PUT/PATCH /users/:id
@@ -54,6 +61,7 @@ export default function UsuariosPage() {
         users={users}
         onEdit={(user) => setUserEditando(user)}
         onDelete={(user) => setUserExcluindo(user)}
+        onToggleActive={handleToggleActive}
       />
 
       <AddUserModal open={addModalOpen} onClose={() => setAddModalOpen(false)} onSave={handleAdd} />

@@ -7,9 +7,10 @@ type UserTableProps = {
   users: User[];
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
+  onToggleActive: (user: User) => void; 
 };
 
-export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
+export function UserTable({ users, onEdit, onDelete, onToggleActive}: UserTableProps) {
   return (
     <Table>
       <TableHead>
@@ -54,9 +55,16 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
               </span>
             </TableCell>
             <TableCell>
-              <span className={user.isActive ? "text-green-600" : "text-gray-400"}>
+              <button
+                onClick={() => onToggleActive(user)}
+                className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                  user.isActive
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
                 {user.isActive ? "Ativo" : "Inativo"}
-              </span>
+              </button>
             </TableCell>
             <TableCell>
               <div className="flex gap-3">
