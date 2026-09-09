@@ -11,7 +11,7 @@ from app.extensions import db
 from app.models import User
 
 # Hash de uma senha que ninguem usa. Ver o comentario em `authenticate`.
-_HASH_DESCARTAVEL = generate_password_hash("nao-e-a-senha-de-ninguem")
+_DUMMY_HASH = generate_password_hash("nao-e-a-senha-de-ninguem")
 
 
 class AuthError(Exception):
@@ -57,11 +57,11 @@ def authenticate(email: str, password: str) -> User:
     # Com e-mail inexistente, conferir um hash descartavel em vez de sair
     # direto. Verificar hash e lento de proposito; sair antes deixaria a
     # resposta visivelmente mais rapida e entregaria quem tem conta.
-    hash_alvo = user.password_hash if user else _HASH_DESCARTAVEL
-    senha_confere = check_password_hash(hash_alvo, password)
+    target_hash = user.password_hash if user else _DUMMY_HASH
+    password_matches = check_password_hash(target_hash, password)
 
     # Mensagem unica para e-mail errado e senha errada, pelo mesmo motivo.
-    if not user or not senha_confere:
+    if not user or not password_matches:
         raise AuthError("E-mail ou senha invalidos.", 401)
 
     # Regra de negocio, nao de rota: o botao de desativar conta da tela

@@ -1,7 +1,7 @@
 """
 Validacao da entrada das rotas de autenticacao.
 
-Cada funcao devolve `(dados, erros)`. Com `erros` nao vazio o blueprint
+Cada funcao devolve `(data, errors)`. Com `errors` nao vazio o blueprint
 responde 400 e nem chama o service. Os limites vem das colunas em
 app/models/user.py.
 """
@@ -13,57 +13,57 @@ DISPLAY_NAME_MAX = 80   # users.display_name = String(80)
 PASSWORD_MIN = 8
 
 
-def _texto(payload: dict, chave: str) -> str:
-    valor = payload.get(chave)
-    return valor.strip() if isinstance(valor, str) else ""
+def _text(payload: dict, key: str) -> str:
+    value = payload.get(key)
+    return value.strip() if isinstance(value, str) else ""
 
 
 def validate_register(payload) -> tuple:
     payload = payload or {}
-    erros = {}
+    errors = {}
 
-    username = _texto(payload, "username")
-    email = _texto(payload, "email").lower()
+    username = _text(payload, "username")
+    email = _text(payload, "email").lower()
     # A senha nao leva strip: espaco no comeco ou no fim faz parte dela.
-    senha = payload.get("password")
-    senha = senha if isinstance(senha, str) else ""
-    display_name = _texto(payload, "displayName")
+    password = payload.get("password")
+    password = password if isinstance(password, str) else ""
+    display_name = _text(payload, "displayName")
 
     if not USERNAME_MIN <= len(username) <= USERNAME_MAX:
-        erros["username"] = (
+        errors["username"] = (
             f"Deve ter entre {USERNAME_MIN} e {USERNAME_MAX} caracteres."
         )
     if not email or "@" not in email or len(email) > EMAIL_MAX:
-        erros["email"] = "E-mail invalido."
-    if len(senha) < PASSWORD_MIN:
-        erros["password"] = f"Deve ter no minimo {PASSWORD_MIN} caracteres."
+        errors["email"] = "E-mail invalido."
+    if len(password) < PASSWORD_MIN:
+        errors["password"] = f"Deve ter no minimo {PASSWORD_MIN} caracteres."
     if len(display_name) > DISPLAY_NAME_MAX:
-        erros["displayName"] = (
+        errors["displayName"] = (
             f"Deve ter no maximo {DISPLAY_NAME_MAX} caracteres."
         )
 
     # Um "role" no corpo da requisicao nao sai daqui: papel nao se
     # escolhe no cadastro. Ver app/services/auth.py.
-    dados = {
+    data = {
         "username": username,
         "email": email,
-        "password": senha,
+        "password": password,
         "display_name": display_name or None,
     }
-    return dados, erros
+    return data, errors
 
 
 def validate_login(payload) -> tuple:
     payload = payload or {}
-    erros = {}
+    errors = {}
 
-    email = _texto(payload, "email").lower()
-    senha = payload.get("password")
-    senha = senha if isinstance(senha, str) else ""
+    email = _text(payload, "email").lower()
+    password = payload.get("password")
+    password = password if isinstance(password, str) else ""
 
     if not email:
-        erros["email"] = "Obrigatorio."
-    if not senha:
-        erros["password"] = "Obrigatorio."
+        errors["email"] = "Obrigatorio."
+    if not password:
+        errors["password"] = "Obrigatorio."
 
-    return {"email": email, "password": senha}, erros
+    return {"email": email, "password": password}, errors

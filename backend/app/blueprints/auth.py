@@ -20,25 +20,25 @@ bp = Blueprint("auth", __name__)
 
 
 @bp.errorhandler(AuthError)
-def _trata_auth_error(erro: AuthError):
+def _handle_auth_error(error: AuthError):
     """Existir isto e o que permite ao service so levantar AuthError, sem
     saber o que e um status HTTP."""
-    return jsonify(error=erro.message), erro.status
+    return jsonify(error=error.message), error.status
 
 
-def _dados_invalidos(erros: dict):
-    return jsonify(error="Dados invalidos.", fields=erros), 400
+def _invalid_data(errors: dict):
+    return jsonify(error="Dados invalidos.", fields=errors), 400
 
 
 @bp.post("/register")
 def register():
     # silent=True: corpo ausente ou JSON quebrado vira None, em vez de um
     # 415 em HTML que o front nao consegue ler.
-    dados, erros = validate_register(request.get_json(silent=True))
-    if erros:
-        return _dados_invalidos(erros)
+    data, errors = validate_register(request.get_json(silent=True))
+    if errors:
+        return _invalid_data(errors)
 
-    user = register_user(**dados)
+    user = register_user(**data)
     # Ja devolve o token: quem se cadastrou entra logado, sem digitar a
     # senha de novo na tela seguinte.
     return jsonify(
@@ -49,11 +49,11 @@ def register():
 
 @bp.post("/login")
 def login():
-    dados, erros = validate_login(request.get_json(silent=True))
-    if erros:
-        return _dados_invalidos(erros)
+    data, errors = validate_login(request.get_json(silent=True))
+    if errors:
+        return _invalid_data(errors)
 
-    user = authenticate(**dados)
+    user = authenticate(**data)
     return jsonify(
         token=create_access_token(identity=user),
         user=user_to_json(user),

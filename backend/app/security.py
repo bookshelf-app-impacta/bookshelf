@@ -10,8 +10,8 @@ importam:
 
     @bp.post("")
     @admin_required
-    def criar_livro():
-        livro = Book(..., created_by=current_user.id)
+    def create_book():
+        book = Book(..., created_by=current_user.id)
 """
 
 from functools import wraps
@@ -24,16 +24,16 @@ from app.models import User
 
 
 @jwt.user_identity_loader
-def _identidade(user: User) -> str:
+def _user_identity(user: User) -> str:
     # String, nao int: a RFC 7519 define `sub` como string e o
     # Flask-JWT-Extended 4.7 passou a recusar o token quando nao e.
     return str(user.id)
 
 
 @jwt.user_lookup_loader
-def _carrega_usuario(_cabecalho, dados_do_token):
+def _load_user(_header, jwt_data):
     """Roda a cada requisicao autenticada e alimenta o `current_user`."""
-    return db.session.get(User, int(dados_do_token["sub"]))
+    return db.session.get(User, int(jwt_data["sub"]))
 
 
 def admin_required(fn):
@@ -56,20 +56,20 @@ def admin_required(fn):
 
 
 @jwt.unauthorized_loader
-def _sem_token(_motivo):
+def _missing_token(_reason):
     return jsonify(error="Token de autenticacao ausente."), 401
 
 
 @jwt.invalid_token_loader
-def _token_invalido(_motivo):
+def _invalid_token(_reason):
     return jsonify(error="Token de autenticacao invalido."), 401
 
 
 @jwt.expired_token_loader
-def _token_expirado(_cabecalho, _dados_do_token):
+def _expired_token(_header, _jwt_data):
     return jsonify(error="Sessao expirada. Faca login novamente."), 401
 
 
 @jwt.user_lookup_error_loader
-def _usuario_sumiu(_cabecalho, _dados_do_token):
+def _user_not_found(_header, _jwt_data):
     return jsonify(error="Usuario do token nao existe mais."), 401
