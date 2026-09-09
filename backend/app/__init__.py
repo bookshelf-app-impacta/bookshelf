@@ -12,17 +12,12 @@ from app.extensions import cors, db, jwt, migrate
 
 
 def create_app(config_object: type = Config) -> Flask:
-    # O .env ja foi lido no import de app.config — precisa ser antes
-    # do corpo da classe Config, nao aqui.
     app = Flask(__name__)
     app.config.from_object(config_object)
 
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    # O front roda em localhost:3000 e a API em localhost:5000 — origens
-    # diferentes. Sem CORS o navegador bloqueia o login antes da
-    # requisicao sair, e o erro que aparece no console nao diz isso.
     cors.init_app(
         app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}}
     )
@@ -32,8 +27,7 @@ def create_app(config_object: type = Config) -> Flask:
     # nao enxerga a tabela e gera uma migration incompleta em silencio.
     from app import models  # noqa: F401
 
-    # Registra os callbacks do JWT: o que vai dentro do token, como o
-    # `current_user` e carregado e o formato dos erros 401.
+    # Registra os callbacks do JWT (identidade, current_user, erros).
     from app import security  # noqa: F401
 
     from app.cli import register_cli

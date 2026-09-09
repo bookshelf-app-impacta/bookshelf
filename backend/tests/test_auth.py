@@ -1,25 +1,13 @@
 """
 Testes das rotas de autenticacao.
 
-Rodam contra o MySQL de desenvolvimento, o mesmo que sobe no
-`docker compose up -d`. Nao ha banco em memoria porque os models usam
-tipos do dialeto MySQL (o BIGINT UNSIGNED de app/models/base.py) que o
-SQLite nao consegue compilar.
-
-Antes de rodar, com o banco de pe:
-
-    flask db upgrade
-    flask seed
-
-E rode de dentro de backend/, com o venv ativo:
+Rodam contra o MySQL de desenvolvimento, ja migrado e com `flask seed`
+aplicado — nao da para usar SQLite porque os models usam o BIGINT
+UNSIGNED do dialeto MySQL. De dentro de backend/:
 
     python -m pytest
 
-O `python -m` importa: e ele que coloca o diretorio atual no sys.path.
-Um `pytest` solto nao acha o pacote `app`.
-
-O que grava no banco usa e-mail unico e apaga a linha no fim, para nao
-sujar a base que o grupo usa para revisar PR e gravar o video.
+O `python -m` importa: e ele que poe o diretorio atual no sys.path.
 """
 
 import uuid
@@ -41,10 +29,9 @@ def app():
     aplicacao = create_app()
     aplicacao.config.update(TESTING=True)
 
-    # Rota descartavel, registrada so aqui. A primeira rota de admin de
-    # verdade e o cadastro de livro, que e card de outra pessoa e ainda
-    # nao existe — sem isto nao haveria como provar que o @admin_required
-    # funciona antes dela chegar.
+    # A primeira rota de admin de verdade e o cadastro de livro, que e
+    # card de outra pessoa. Sem esta rota descartavel nao haveria como
+    # provar o @admin_required antes dela chegar.
     @aplicacao.get("/api/_teste/so-admin")
     @admin_required
     def _so_admin():
@@ -70,7 +57,8 @@ def _auth(token: str) -> dict:
 
 @pytest.fixture()
 def email_descartavel(app):
-    """E-mail unico; a linha e removida do banco quando o teste acaba."""
+    """E-mail unico; a linha sai do banco quando o teste acaba, para nao
+    sujar a base que o grupo usa para revisar PR e gravar o video."""
     email = f"pytest-{uuid.uuid4().hex[:8]}@bookshelf.local"
     yield email
     with app.app_context():
@@ -87,8 +75,8 @@ def test_login_valido_devolve_token_e_usuario(client):
 
     assert resposta.status_code == 200
     assert corpo["token"]
-    # As chaves do usuario sao o contrato com o frontend
-    # (frontend/src/types/user.ts). Se alguma sumir, a tela quebra.
+    # Contrato com frontend/src/types/user.ts: se uma chave sumir, a tela
+    # quebra e o teste tem que acusar.
     assert set(corpo["user"]) == {
         "id", "username", "email", "displayName", "avatarUrl",
         "role", "isActive",
@@ -105,7 +93,7 @@ def test_login_com_senha_errada_devolve_401(client):
     )
 
     assert resposta.status_code == 401
-    # Mesma mensagem de e-mail inexistente, de proposito: dizer qual dos
+    # Mesma mensagem do e-mail inexistente, de proposito: dizer qual dos
     # dois errou confirma quais e-mails tem conta.
     assert resposta.get_json()["error"] == "E-mail ou senha invalidos."
 
@@ -138,7 +126,7 @@ def test_conta_desativada_nao_loga(client, app, email_descartavel):
     })
 
     # 403 e nao 401: as credenciais estao certas, a conta e que esta
-    # bloqueada. O front precisa distinguir para mostrar a mensagem certa.
+    # bloqueada.
     assert resposta.status_code == 403
     assert resposta.get_json()["error"] == "Esta conta esta desativada."
 
@@ -149,8 +137,8 @@ def test_conta_desativada_nao_loga(client, app, email_descartavel):
 def test_me_sem_token_devolve_401(client):
     resposta = client.get("/api/auth/me")
 
-    assert resposta.status_code == 401
     # Em JSON, nao em HTML: o response.json() do front estoura com HTML.
+    assert resposta.status_code == 401
     assert "error" in resposta.get_json()
 
 
@@ -168,11 +156,8 @@ def test_me_com_token_devolve_o_usuario_do_token(client):
 
 def test_register_ignora_role_do_corpo_da_requisicao(client,
                                                      email_descartavel):
-    """O teste mais importante do arquivo.
-
-    Se o `role` do corpo fosse aceito, qualquer pessoa se cadastraria como
-    admin e ganharia o direito de cadastrar livros.
-    """
+    """Se o `role` do corpo fosse aceito, qualquer pessoa se cadastraria
+    como admin e ganharia o direito de cadastrar livros."""
     resposta = client.post("/api/auth/register", json={
         "username": f"esc{uuid.uuid4().hex[:6]}",
         "email": email_descartavel,
@@ -219,8 +204,7 @@ def test_admin_required_bloqueia_usuario_comum(client):
     token = _login(client, COMUM)
     resposta = client.get("/api/_teste/so-admin", headers=_auth(token))
 
-    # 403 e nao 401: sabemos quem e, so nao pode. O front nao deve mandar
-    # essa pessoa para a tela de login.
+    # 403 e nao 401: sabemos quem e, so nao pode.
     assert resposta.status_code == 403
 
 

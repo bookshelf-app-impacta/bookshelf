@@ -1,16 +1,9 @@
 """
 Validacao da entrada das rotas de autenticacao.
 
-Feita a mao de proposito. Sao tres campos por rota, e marshmallow ou
-pydantic seriam uma dependencia nova que os sete integrantes teriam que
-instalar para ganhar pouca coisa.
-
-Cada funcao devolve a dupla `(dados, erros)`. Se `erros` nao estiver
-vazio, o blueprint responde 400 e nem chega a chamar o service.
-
-Os limites de tamanho vem das colunas em app/models/user.py. Validar aqui
-evita dois problemas: o MySQL truncando a string em silencio, e o usuario
-recebendo um erro cru de banco de dados na tela.
+Cada funcao devolve `(dados, erros)`. Com `erros` nao vazio o blueprint
+responde 400 e nem chama o service. Os limites vem das colunas em
+app/models/user.py.
 """
 
 USERNAME_MIN = 3
@@ -21,7 +14,6 @@ PASSWORD_MIN = 8
 
 
 def _texto(payload: dict, chave: str) -> str:
-    """Le uma chave como texto limpo. Ausente ou de outro tipo vira ''."""
     valor = payload.get(chave)
     return valor.strip() if isinstance(valor, str) else ""
 
@@ -50,18 +42,14 @@ def validate_register(payload) -> tuple:
             f"Deve ter no maximo {DISPLAY_NAME_MAX} caracteres."
         )
 
+    # Um "role" no corpo da requisicao nao sai daqui: papel nao se
+    # escolhe no cadastro. Ver app/services/auth.py.
     dados = {
         "username": username,
         "email": email,
         "password": senha,
-        # Campo opcional: string vazia vira None, porque a coluna aceita
-        # NULL e "" nao e um nome de exibicao.
         "display_name": display_name or None,
     }
-
-    # Um eventual "role" no corpo da requisicao e ignorado aqui e nem
-    # chega ao service — papel nao se escolhe no cadastro.
-    # Ver app/services/auth.py.
     return dados, erros
 
 
@@ -78,7 +66,4 @@ def validate_login(payload) -> tuple:
     if not senha:
         erros["password"] = "Obrigatorio."
 
-    # Nada de validar formato de e-mail ou tamanho de senha no login:
-    # so importa se as credenciais conferem, e uma mensagem do tipo
-    # "senha curta demais" entrega informacao sobre a conta alheia.
     return {"email": email, "password": senha}, erros
