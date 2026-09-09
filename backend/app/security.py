@@ -1,19 +1,3 @@
-"""
-Autenticacao: quem esta logado e quem pode o que.
-
-Fica na raiz de `app/` porque um decorador de permissao nao e rota, nem
-regra de negocio, nem model, nem schema. E o que as outras frentes
-importam:
-
-    from flask_jwt_extended import current_user
-    from app.security import admin_required
-
-    @bp.post("")
-    @admin_required
-    def create_book():
-        book = Book(..., created_by=current_user.id)
-"""
-
 from functools import wraps
 
 from flask import jsonify
@@ -37,8 +21,6 @@ def _load_user(_header, jwt_data):
 
 
 def admin_required(fn):
-    """Exige token valido E papel de admin."""
-
     @wraps(fn)
     def wrapper(*args, **kwargs):
         verify_jwt_in_request()

@@ -1,15 +1,3 @@
-"""
-Testes das rotas de autenticacao.
-
-Rodam contra o MySQL de desenvolvimento, ja migrado e com `flask seed`
-aplicado — nao da para usar SQLite porque os models usam o BIGINT
-UNSIGNED do dialeto MySQL. De dentro de backend/:
-
-    python -m pytest
-
-O `python -m` importa: e ele que poe o diretorio atual no sys.path.
-"""
-
 import uuid
 
 import pytest

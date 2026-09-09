@@ -1,10 +1,3 @@
-"""
-Regra de negocio da autenticacao.
-
-Nada aqui conhece `request` ou `jsonify` — quem traduz para HTTP e o
-blueprint.
-"""
-
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
@@ -51,7 +44,6 @@ def register_user(username: str, email: str, password: str,
 
 
 def authenticate(email: str, password: str) -> User:
-    """Devolve o usuario das credenciais, ou levanta AuthError."""
     user = db.session.query(User).filter_by(email=email).first()
 
     # Com e-mail inexistente, conferir um hash descartavel em vez de sair

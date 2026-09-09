@@ -1,11 +1,3 @@
-"""
-Validacao da entrada das rotas de autenticacao.
-
-Cada funcao devolve `(data, errors)`. Com `errors` nao vazio o blueprint
-responde 400 e nem chama o service. Os limites vem das colunas em
-app/models/user.py.
-"""
-
 USERNAME_MIN = 3
 USERNAME_MAX = 30       # users.username = String(30)
 EMAIL_MAX = 255         # users.email = String(255)

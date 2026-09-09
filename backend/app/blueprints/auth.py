@@ -1,14 +1,3 @@
-"""
-Rotas de autenticacao.  [AC1]
-
-O token vai em `Authorization: Bearer <token>`. Formato das respostas,
-combinado com o front:
-
-    sucesso  {"token": "...", "user": {...}}   (o /me devolve so o user)
-    erro     {"error": "mensagem"}
-    400      {"error": "...", "fields": {"campo": "o que esta errado"}}
-"""
-
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, current_user, jwt_required
 
@@ -21,8 +10,6 @@ bp = Blueprint("auth", __name__)
 
 @bp.errorhandler(AuthError)
 def _handle_auth_error(error: AuthError):
-    """Existir isto e o que permite ao service so levantar AuthError, sem
-    saber o que e um status HTTP."""
     return jsonify(error=error.message), error.status
 
 
