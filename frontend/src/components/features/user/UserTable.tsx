@@ -18,7 +18,7 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
           <TableHeaderCell>Nome</TableHeaderCell>
           <TableHeaderCell>Username</TableHeaderCell>
           <TableHeaderCell>E-mail</TableHeaderCell>
-          <TableHeaderCell>Papel</TableHeaderCell>
+          <TableHeaderCell>Tipo de Conta</TableHeaderCell>
           <TableHeaderCell>Status</TableHeaderCell>
           <TableHeaderCell></TableHeaderCell>
         </tr>
