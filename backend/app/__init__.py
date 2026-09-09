@@ -5,7 +5,6 @@ Quem for fazer as rotas registra os blueprints aqui dentro, na secao
 marcada. Nao criar `app = Flask(__name__)` solto em outro arquivo.
 """
 
-from dotenv import load_dotenv
 from flask import Flask
 
 from app.config import Config
@@ -13,8 +12,8 @@ from app.extensions import db, migrate
 
 
 def create_app(config_object: type = Config) -> Flask:
-    load_dotenv()
-
+    # O .env ja foi lido no import de app.config — precisa ser antes
+    # do corpo da classe Config, nao aqui.
     app = Flask(__name__)
     app.config.from_object(config_object)
 

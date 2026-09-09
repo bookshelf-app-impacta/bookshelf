@@ -2,6 +2,17 @@
 
 import os
 
+from dotenv import load_dotenv
+
+# Ler o .env AQUI, antes do corpo da classe.
+#
+# Os `os.environ.get` abaixo rodam uma vez so, no momento em que este
+# modulo e importado. Enquanto o load_dotenv() ficava dentro do
+# create_app, ele acontecia depois — e nenhum valor do .env chegava a
+# tempo: a aplicacao subia inteira nos defaults. Passava despercebido
+# porque o default da DATABASE_URL e igual ao do arquivo.
+load_dotenv()
+
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-nao-usar-em-producao")
