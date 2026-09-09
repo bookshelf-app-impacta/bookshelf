@@ -1,7 +1,9 @@
 "use client";
 
-import { User } from "@/types/user";
+import { User } from "@/types/user";//importa o molde do objeto
 
+//cria um molde para a função
+// função que recebe o usuário a excluir e não devolve nada, só executa a ação
 type DeleteUserModalProps = {
   user: User | null;
   onClose: () => void;
@@ -10,7 +12,7 @@ type DeleteUserModalProps = {
 
 export function DeleteUserModal({ user, onClose, onConfirm }: DeleteUserModalProps) {
   if (!user) return null;
-
+//retorna um html
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-sm text-center">

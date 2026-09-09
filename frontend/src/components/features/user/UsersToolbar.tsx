@@ -1,10 +1,11 @@
 import { Search } from "lucide-react";
 
+//cria um molde para a função
 type UsersToolbarProps = {
   onAdicionar: () => void;
   onBuscar: (termo: string) => void;
 };
-
+//ainda sem função para funcionamento adequado
 export function UsersToolbar({ onAdicionar, onBuscar }: UsersToolbarProps) {
   return (
     <div className="flex items-center justify-end gap-4 py-4">

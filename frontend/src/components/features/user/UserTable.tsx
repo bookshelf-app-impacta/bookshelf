@@ -1,8 +1,9 @@
 import Image from "next/image";
-import { Pencil, Trash2 } from "lucide-react";
-import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
-import { User } from "@/types/user";
+import { Pencil, Trash2 } from "lucide-react";//icones
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";//ui ta tabela
+import { User } from "@/types/user";//importa o molde do objeto
 
+//cria um molde para a função
 type UserTableProps = {
   users: User[];
   onEdit: (user: User) => void;
@@ -10,6 +11,7 @@ type UserTableProps = {
   onToggleActive: (user: User) => void; 
 };
 
+//retorna um html
 export function UserTable({ users, onEdit, onDelete, onToggleActive}: UserTableProps) {
   return (
     <Table>

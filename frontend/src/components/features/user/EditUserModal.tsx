@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, User as UserIcon } from "lucide-react";
-import { User, UserRole } from "@/types/user";
+import { useEffect, useState } from "react";// hook(permite que a função tenha memória própria e reagir a mudanças) do React pra guardar estado
+import { X, User as UserIcon } from "lucide-react";//icone
+import { User, UserRole } from "@/types/user";//importa o molde do objeto
 
+//cria um molde para a função
 type EditUserModalProps = {
   user: User | null;
   onClose: () => void;
@@ -11,12 +12,14 @@ type EditUserModalProps = {
 };
 
 export function EditUserModal({ user, onClose, onSave }: EditUserModalProps) {
+  //cosntante e seus estados
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("user");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-
+  
+  //se tem o usuário, pode setar tudo com as funções de setar
   useEffect(() => {
     if (user) {
       setUsername(user.username);
@@ -27,20 +30,23 @@ export function EditUserModal({ user, onClose, onSave }: EditUserModalProps) {
     }
   }, [user]);
 
+  //caso não tenha usuário, não faça nada
   if (!user) return null;
 
+  //muda o usuário recebido para usuário atual
   const usuarioAtual = user; 
 
+  //caso a uma troca de imagem
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setAvatarPreview(URL.createObjectURL(file));
+    const file = e.target.files?.[0];//pega a primeira imagem
+    if (!file) return;// se o usuário cancelou a seleção, não faz nada 
+    setAvatarPreview(URL.createObjectURL(file));// gera uma URL temporária só pra mostrar a prévia na tela
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     onSave({
-      ...usuarioAtual, // troca aqui
+      ...usuarioAtual, // troca pelo usuário recebido
       username,
       displayName: displayName || undefined,
       email,
