@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { login } from "@/lib/api/auth";
+import { useRouter } from "next/navigation";
 
 export function LoginForm() {
+  const router = useRouter();
   //constantes e seus estados. 
   //retorna um array com 2 posições: [valorAtual, funçãoQueAtualiza]
   //[variável sempre lida, única forma permitida para alterar o valor da primeira variável]
@@ -14,16 +17,16 @@ export function LoginForm() {
 
   //função assincrona = não vai parar o projeto esperando uma resposta
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); //impede que a página toda recarregue
-    setErro(null); //limpeza de estado antes de tentar de novo
-    setCarregando(true); //estado que faz o botão mudar de "SIGN IN" pra "Entrando..."
+    e.preventDefault();
+    setErro(null);
+    setCarregando(true);
 
-    //no futuro vai tentar fazer um envio post para o backend, tentanto entrar
     try {
-      // HOLD, integrar com POST /auth/login assim que o backend estiver pronto
-      console.log("login com:", { email, senha });
-    } catch {
-      setErro("E-mail ou senha inválidos."); //tratamento de erro com mensagem amigável
+      const { token, user } = await login({ email, password: senha });
+      localStorage.setItem("token", token);
+      router.push("/"); // rota da home
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "E-mail ou senha inválidos.");
     } finally {
       setCarregando(false);
     }
