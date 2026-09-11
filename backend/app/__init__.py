@@ -6,7 +6,7 @@ marcada. Nao criar `app = Flask(__name__)` solto em outro arquivo.
 """
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, app
 
 from app.config import Config
 from app.extensions import db, migrate
@@ -30,8 +30,8 @@ def create_app(config_object: type = Config) -> Flask:
     register_cli(app)
 
     # --- blueprints -------------------------------------------------
-    # from app.blueprints.books import bp as books_bp
-    # app.register_blueprint(books_bp, url_prefix="/api/books")
+    from app.blueprints.books import bp as books_bp
+    app.register_blueprint(books_bp, url_prefix="/api/books")
     # ----------------------------------------------------------------
 
     @app.get("/api/health")
