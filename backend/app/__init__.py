@@ -5,7 +5,7 @@ Quem for fazer as rotas registra os blueprints aqui dentro, na secao
 marcada. Nao criar `app = Flask(__name__)` solto em outro arquivo.
 """
 
-from flask import Flask
+from flask import Flask, app
 
 from app.config import Config
 from app.extensions import cors, db, jwt, migrate
@@ -37,8 +37,8 @@ def create_app(config_object: type = Config) -> Flask:
     from app.blueprints.auth import bp as auth_bp
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
 
-    # from app.blueprints.books import bp as books_bp
-    # app.register_blueprint(books_bp, url_prefix="/api/books")
+    from app.blueprints.books import bp as books_bp
+    app.register_blueprint(books_bp, url_prefix="/api/books")
     # ----------------------------------------------------------------
 
     @app.get("/api/health")
