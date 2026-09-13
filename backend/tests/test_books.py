@@ -239,6 +239,36 @@ def test_create_book_rejects_duplicate_isbn(client):
     assert second.status_code == 409
 
 
+def test_create_book_rejects_bool_as_page_count(client):
+    # bool e subclasse de int em Python: int(True) == 1 passa reto pelo
+    # int() sem estourar TypeError/ValueError, entao precisa de checagem
+    # explicita pra nao aceitar true/false como numero valido.
+    token = _login(client, ADMIN)
+    response = client.post(
+        "/api/books/",
+        json={"title": "Bool Invalido", "page_count": True},
+        headers=_auth(token),
+    )
+
+    assert response.status_code == 400
+    assert "page_count" in response.get_json()["fields"]
+
+
+def test_create_book_rejects_isbn_with_non_ascii_digit(client):
+    # "¹" (superscript 1) e "²" (superscript 2) passam em
+    # str.isdigit(), embora nao sejam digitos ASCII 0-9.
+    token = _login(client, ADMIN)
+    isbn = "97800000000¹²"
+    response = client.post(
+        "/api/books/",
+        json={"title": "Isbn Invalido", "isbn13": isbn},
+        headers=_auth(token),
+    )
+
+    assert response.status_code == 400
+    assert "isbn13" in response.get_json()["fields"]
+
+
 # --- editar livro (PUT) ------------------------------------------------
 
 
