@@ -7,13 +7,16 @@ segunda convencao (camelCase) so pra entrada confundiria mais do que
 ajudaria, já que front e back leem o mesmo nome dos dois lados.
 """
 
+import re
+
 TITLE_MAX = 255
 ORIGINAL_TITLE_MAX = 255
 COVER_URL_MAX = 500
 PUBLISHER_MAX = 150
 LANGUAGE_MAX = 40
+AUTHOR_NAME_MAX = 150
 ISBN13_LEN = 13
-YEAR_MIN = 1400  # mesmo intervalo do ck_books_year no banco
+YEAR_MIN = 1400
 YEAR_MAX = 2200
 
 
@@ -27,8 +30,11 @@ def _optional_int(payload: dict, key: str) -> tuple:
     None valido — sao os dois jeitos de "nao informei esse campo"."""
     if payload.get(key) in (None, ""):
         return None, True
+    value = payload[key]
+    if isinstance(value, bool):
+        return None, False
     try:
-        return int(payload[key]), True
+        return int(value), True
     except (TypeError, ValueError):
         return None, False
 
@@ -67,7 +73,7 @@ def _validate(payload: dict, *, partial: bool) -> tuple:
 
     if "isbn13" in payload or not partial:
         isbn13 = _text(payload, "isbn13") or None
-        if isbn13 and (not isbn13.isdigit() or len(isbn13) != ISBN13_LEN):
+        if isbn13 and not re.fullmatch(r"[0-9]{%d}" % ISBN13_LEN, isbn13):
             errors["isbn13"] = f"Deve ter {ISBN13_LEN} digitos numericos."
         data["isbn13"] = isbn13
 
@@ -99,11 +105,11 @@ def _validate(payload: dict, *, partial: bool) -> tuple:
             errors["page_count"] = "Nao pode ser negativo."
         data["page_count"] = page_count
 
-    if "author_id" in payload or not partial:
-        author_id, ok = _optional_int(payload, "author_id")
-        if not ok:
-            errors["author_id"] = "Deve ser um numero."
-        data["author_id"] = author_id
+    if "author" in payload or not partial:
+        author = _text(payload, "author") or None
+        if author and len(author) > AUTHOR_NAME_MAX:
+            errors["author"] = f"No maximo {AUTHOR_NAME_MAX} caracteres."
+        data["author"] = author
 
     if "genre_id" in payload or not partial:
         genre_id, ok = _optional_int(payload, "genre_id")

@@ -14,15 +14,15 @@ O administrador cadastra os livros. Usuários avaliam com nota e comentário e m
 
 ## Status
 
-O repositório está na fase de esqueleto. As pastas e o banco estão prontos; o código das aplicações ainda não foi iniciado.
-
 - [x] Estrutura de diretórios
 - [x] MySQL via Docker Compose
-- [ ] Backend Flask
-- [ ] Frontend Next.js
+- [x] Backend Flask
+- [x] Frontend Next.js
 - [x] Modelagem do banco
 
-## Como subir o banco
+## Como rodar o projeto
+
+### 1. Banco de dados
 
 Requer Docker instalado.
 
@@ -48,6 +48,35 @@ Para parar:
 ```bash
 docker compose down          # mantém os dados
 docker compose down -v       # apaga os dados também
+```
+
+### 2. Backend (Flask)
+
+```bash
+cd backend
+cp .env.example .env   # preencher SECRET_KEY (veja o comentário no próprio arquivo)
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+flask db upgrade
+flask seed              # opcional: cria dados de exemplo, incluindo um admin
+flask run                # API em http://localhost:5000
+```
+
+O `flask seed` cria, entre outros, o usuário administrador `admin@bookshelf.local` / `admin123` — é com essa conta que se cadastra livro, já que **cadastrar livro exige login como admin** (listar e ver detalhes continua público, sem login).
+
+Rodar os testes:
+
+```bash
+pytest -v
+```
+
+### 3. Frontend (Next.js)
+
+```bash
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev              # app em http://localhost:3000
 ```
 
 ## Estrutura

@@ -5,6 +5,8 @@ Logica de busca, criacao, edicao e remocao de livros.
 import re
 import unicodedata
 
+from sqlalchemy.exc import IntegrityError
+
 from app.extensions import db
 from app.models.book import Author, Book, Genre
 
@@ -37,8 +39,6 @@ def _unique_slug(title: str, release_year) -> str:
     if release_year:
         base = f"{base}-{release_year}"
 
-    # Sufixo numerico na colisao, igual ao `uq_reviews_user_book`: o
-    # banco so recusa a duplicata, quem resolve e a aplicacao.
     slug = base
     suffix = 2
     while db.session.query(Book).filter_by(slug=slug).first() is not None:
@@ -47,11 +47,23 @@ def _unique_slug(title: str, release_year) -> str:
     return slug
 
 
-def _check_author_and_genre(data: dict) -> None:
-    author_id = data.get("author_id")
-    if author_id is not None and db.session.get(Author, author_id) is None:
-        raise BookError("Autor nao encontrado.", 404)
+def _resolve_author(data: dict) -> None:
+    if "author" not in data:
+        return
+    name = data.pop("author")
+    if not name:
+        data["author_id"] = None
+        return
+    slug = _slugify(name)
+    author = db.session.query(Author).filter_by(slug=slug).first()
+    if author is None:
+        author = Author(name=name, slug=slug)
+        db.session.add(author)
+        db.session.flush()
+    data["author_id"] = author.id
 
+
+def _check_genre(data: dict) -> None:
     genre_id = data.get("genre_id")
     if genre_id is not None and db.session.get(Genre, genre_id) is None:
         raise BookError("Genero nao encontrado.", 404)
@@ -66,7 +78,8 @@ def _check_isbn_unique(isbn13, *, ignore_book_id: int = None) -> None:
 
 
 def create_book(data: dict, created_by: int) -> Book:
-    _check_author_and_genre(data)
+    _resolve_author(data)
+    _check_genre(data)
     _check_isbn_unique(data.get("isbn13"))
 
     book = Book(
@@ -75,7 +88,11 @@ def create_book(data: dict, created_by: int) -> Book:
         created_by=created_by,
     )
     db.session.add(book)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise BookError("Este ISBN ja esta cadastrado.", 409)
     return book
 
 
@@ -88,14 +105,19 @@ def update_book(book_id: int, data: dict) -> Book:
     if book is None:
         raise BookError("Livro nao encontrado.", 404)
 
-    _check_author_and_genre(data)
+    _resolve_author(data)
+    _check_genre(data)
     if "isbn13" in data:
         _check_isbn_unique(data["isbn13"], ignore_book_id=book.id)
 
     for field, value in data.items():
         setattr(book, field, value)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise BookError("Este ISBN ja esta cadastrado.", 409)
     return book
 
 

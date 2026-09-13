@@ -13,7 +13,6 @@ from app.extensions import db
 from app.models.book import Book
 from app.models.user import User
 
-# Credenciais criadas por `flask seed`. Ver app/cli.py.
 ADMIN = {"email": "admin@bookshelf.local", "password": "admin123"}
 REGULAR = {"email": "ana@bookshelf.local", "password": "user123"}
 _SEEDED_EMAILS = {ADMIN["email"], REGULAR["email"], "bruno@bookshelf.local"}
@@ -80,9 +79,6 @@ def _make_user(**overrides) -> User:
     return user
 
 
-# --- listar (GET) ---------------------------------------------------------
-
-
 def test_list_users_requires_admin(client):
     token = _login(client, REGULAR)
     response = client.get("/api/users/", headers=_auth(token))
@@ -103,9 +99,6 @@ def test_list_users_as_admin(client):
     assert response.status_code == 200
     emails = [user["email"] for user in response.get_json()]
     assert ADMIN["email"] in emails
-
-
-# --- criar (POST) -----------------------------------------------------------
 
 
 def test_create_user_requires_admin(client):
@@ -169,9 +162,6 @@ def test_create_user_validates_password_length(client):
     assert "password" in response.get_json()["fields"]
 
 
-# --- editar (PUT) ------------------------------------------------------------
-
-
 def test_update_user_as_admin(client):
     user = _make_user()
     token = _login(client, ADMIN)
@@ -185,7 +175,7 @@ def test_update_user_as_admin(client):
 
     assert response.status_code == 200
     assert data["displayName"] == "Novo Nome"
-    assert data["username"] == user.username  # campo nao enviado, intacto
+    assert data["username"] == user.username
 
 
 def test_update_user_can_deactivate(client):
@@ -232,7 +222,38 @@ def test_update_user_rejects_duplicate_email(client):
     assert response.status_code == 409
 
 
-# --- apagar (DELETE) ----------------------------------------------------------
+def test_update_user_rejects_invalid_role_type(client):
+    user = _make_user()
+    token = _login(client, ADMIN)
+
+    response = client.put(
+        f"/api/users/{user.id}", json={"role": 123}, headers=_auth(token),
+    )
+
+    assert response.status_code == 400
+    assert "role" in response.get_json()["fields"]
+
+
+def test_admin_cannot_demote_own_account(client):
+    token = _login(client, ADMIN)
+    admin_user = db.session.query(User).filter_by(email=ADMIN["email"]).one()
+
+    response = client.put(
+        f"/api/users/{admin_user.id}", json={"role": "user"}, headers=_auth(token),
+    )
+
+    assert response.status_code == 400
+
+
+def test_admin_cannot_deactivate_own_account(client):
+    token = _login(client, ADMIN)
+    admin_user = db.session.query(User).filter_by(email=ADMIN["email"]).one()
+
+    response = client.put(
+        f"/api/users/{admin_user.id}", json={"isActive": False}, headers=_auth(token),
+    )
+
+    assert response.status_code == 400
 
 
 def test_delete_user_as_admin(client):
@@ -263,8 +284,6 @@ def test_admin_cannot_delete_own_account(client):
 
 
 def test_cannot_delete_user_who_created_books(client):
-    # books.created_by e ON DELETE RESTRICT — o banco recusa, e o
-    # service precisa traduzir isso num erro legivel, nao num 500.
     user = _make_user()
     book = Book(
         title="Livro de Teste",

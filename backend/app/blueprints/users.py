@@ -61,7 +61,7 @@ def update_user_route(user_id: int):
     if errors:
         return _invalid_data(errors)
 
-    user = update_user(user_id, data)
+    user = update_user(user_id, data, requested_by=current_user.id)
     return jsonify(user_to_json(user)), 200
 
 
