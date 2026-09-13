@@ -39,6 +39,6 @@ export type BookInput = {
   publisher?: string | null;
   page_count?: number | null;
   language?: string | null;
-  author_id?: number | null;
+  author?: string | null;
   genre_id?: number | null;
 };

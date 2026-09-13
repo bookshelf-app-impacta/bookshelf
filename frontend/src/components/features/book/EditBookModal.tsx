@@ -14,6 +14,7 @@ type EditBookModalProps = {
 export function EditBookModal({ book, onClose, onSave }: EditBookModalProps) {
   const [title, setTitle] = useState("");
   const [originalTitle, setOriginalTitle] = useState("");
+  const [author, setAuthor] = useState("");
   const [releaseYear, setReleaseYear] = useState("");
   const [synopsis, setSynopsis] = useState("");
   const [isbn13, setIsbn13] = useState("");
@@ -31,6 +32,7 @@ export function EditBookModal({ book, onClose, onSave }: EditBookModalProps) {
     if (!book) return;
     setTitle(book.title);
     setOriginalTitle(book.original_title ?? "");
+    setAuthor(book.author?.name ?? "");
     setReleaseYear(book.release_year?.toString() ?? "");
     setSynopsis(book.synopsis ?? "");
     setIsbn13(book.isbn13 ?? "");
@@ -52,6 +54,7 @@ export function EditBookModal({ book, onClose, onSave }: EditBookModalProps) {
       const atualizado = await updateBook(book.id, {
         title,
         original_title: originalTitle || null,
+        author: author || null,
         release_year: releaseYear ? Number(releaseYear) : null,
         synopsis: synopsis || null,
         isbn13: isbn13 || null,
@@ -91,6 +94,12 @@ export function EditBookModal({ book, onClose, onSave }: EditBookModalProps) {
             placeholder="Título original"
             value={originalTitle}
             onChange={(e) => setOriginalTitle(e.target.value)}
+            className="border rounded-lg px-3 py-2 text-sm"
+          />
+          <input
+            placeholder="Autor"
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
             className="border rounded-lg px-3 py-2 text-sm"
           />
 

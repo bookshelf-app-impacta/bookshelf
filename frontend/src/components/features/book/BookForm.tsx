@@ -11,6 +11,7 @@ export function BookForm() {
 
   const [title, setTitle] = useState("");
   const [originalTitle, setOriginalTitle] = useState("");
+  const [author, setAuthor] = useState("");
   const [releaseYear, setReleaseYear] = useState("");
   const [synopsis, setSynopsis] = useState("");
   const [isbn13, setIsbn13] = useState("");
@@ -33,6 +34,7 @@ export function BookForm() {
       await createBook({
         title,
         original_title: originalTitle || undefined,
+        author: author || undefined,
         release_year: releaseYear ? Number(releaseYear) : undefined,
         synopsis: synopsis || undefined,
         isbn13: isbn13 || undefined,
@@ -80,6 +82,16 @@ export function BookForm() {
         {fieldErrors.original_title && (
           <p className="text-red-600 text-xs mt-1">{fieldErrors.original_title}</p>
         )}
+      </div>
+
+      <div>
+        <label className="text-sm text-gray-700">Autor</label>
+        <input
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
+        />
+        {fieldErrors.author && <p className="text-red-600 text-xs mt-1">{fieldErrors.author}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
