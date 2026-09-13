@@ -232,6 +232,42 @@ def test_update_user_rejects_duplicate_email(client):
     assert response.status_code == 409
 
 
+def test_update_user_rejects_invalid_role_type(client):
+    # role=123 (nao-string) nao pode virar "user" silenciosamente: tem
+    # que gerar erro de validacao, igual role="qualquer-coisa" ja gera.
+    user = _make_user()
+    token = _login(client, ADMIN)
+
+    response = client.put(
+        f"/api/users/{user.id}", json={"role": 123}, headers=_auth(token),
+    )
+
+    assert response.status_code == 400
+    assert "role" in response.get_json()["fields"]
+
+
+def test_admin_cannot_demote_own_account(client):
+    token = _login(client, ADMIN)
+    admin_user = db.session.query(User).filter_by(email=ADMIN["email"]).one()
+
+    response = client.put(
+        f"/api/users/{admin_user.id}", json={"role": "user"}, headers=_auth(token),
+    )
+
+    assert response.status_code == 400
+
+
+def test_admin_cannot_deactivate_own_account(client):
+    token = _login(client, ADMIN)
+    admin_user = db.session.query(User).filter_by(email=ADMIN["email"]).one()
+
+    response = client.put(
+        f"/api/users/{admin_user.id}", json={"isActive": False}, headers=_auth(token),
+    )
+
+    assert response.status_code == 400
+
+
 # --- apagar (DELETE) ----------------------------------------------------------
 
 
