@@ -64,10 +64,6 @@ def update_user(user_id: int, data: dict, *, requested_by: int) -> User:
     if user is None:
         raise UserError("Usuario nao encontrado.", 404)
 
-    # Sem esta checagem, o admin logado consegue se autodemover ou se
-    # autodesativar e ficar trancado fora do proprio sistema sem ter
-    # como desfazer — mesmo risco que delete_user ja bloqueia pra
-    # exclusao, so que aqui pela edicao.
     if user_id == requested_by:
         if data.get("role") == "user":
             raise UserError("Nao e possivel remover o proprio nivel de admin.", 400)
@@ -96,9 +92,6 @@ def update_user(user_id: int, data: dict, *, requested_by: int) -> User:
 
 
 def delete_user(user_id: int, *, requested_by: int) -> None:
-    # Sem essa checagem, um admin consegue se excluir e ficar de fora do
-    # proprio sistema sem ter como desfazer — nenhum card pediu essa
-    # trava, mas deixar faltar e o tipo de bug que so aparece em produção.
     if user_id == requested_by:
         raise UserError("Nao e possivel excluir a propria conta.", 400)
 
@@ -110,9 +103,6 @@ def delete_user(user_id: int, *, requested_by: int) -> None:
     try:
         db.session.commit()
     except IntegrityError:
-        # books.created_by e ON DELETE RESTRICT (docs/BANCO-DE-DADOS.md):
-        # o banco recusa apagar quem cadastrou livro. Sem este catch, o
-        # admin veria um 500 cru em vez de um erro legivel.
         db.session.rollback()
         raise UserError(
             "Nao e possivel excluir um usuario que cadastrou livros.", 409

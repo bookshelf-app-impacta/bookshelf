@@ -39,8 +39,6 @@ def _unique_slug(title: str, release_year) -> str:
     if release_year:
         base = f"{base}-{release_year}"
 
-    # Sufixo numerico na colisao, igual ao `uq_reviews_user_book`: o
-    # banco so recusa a duplicata, quem resolve e a aplicacao.
     slug = base
     suffix = 2
     while db.session.query(Book).filter_by(slug=slug).first() is not None:
@@ -80,10 +78,6 @@ def create_book(data: dict, created_by: int) -> Book:
     try:
         db.session.commit()
     except IntegrityError:
-        # Duas criacoes concorrentes com o mesmo isbn13 passam ambas
-        # pelo SELECT de _check_isbn_unique antes de qualquer commit —
-        # sem este catch, a segunda estoura um 500 cru em vez do 409
-        # que a primeira ja recebe.
         db.session.rollback()
         raise BookError("Este ISBN ja esta cadastrado.", 409)
     return book

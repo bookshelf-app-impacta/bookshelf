@@ -13,7 +13,6 @@ from app.extensions import db
 from app.models.book import Author, Book, Genre
 from app.models.user import User
 
-# Credenciais criadas por `flask seed`. Ver app/cli.py.
 ADMIN = {"email": "admin@bookshelf.local", "password": "admin123"}
 REGULAR = {"email": "ana@bookshelf.local", "password": "user123"}
 
@@ -82,9 +81,6 @@ def _cleanup_books(app):
 
 
 def _make_user(**overrides):
-    # E-mail fixo de proposito: o cleanup acima sabe exatamente qual
-    # linha apagar depois. Pra criar mais de um usuario no mesmo teste,
-    # passe email=... diferente pelos overrides.
     data = {
         "username": "tester",
         "email": "tester@bookshelf.local",
@@ -100,10 +96,6 @@ def _make_user(**overrides):
 
 
 def _make_book(**overrides):
-    # Sufixo aleatorio no slug: Author/Genre/Book devem ter slug UNIQUE
-    # no banco. Sem isso, duas execucoes seguidas do mesmo teste dariam
-    # erro de duplicidade em vez do erro que o teste realmente quer
-    # verificar.
     suffix = uuid.uuid4().hex[:6]
     author = Author(name="Autor Teste", slug=f"autor-teste-{suffix}")
     genre = Genre(name="Ficcao", slug=f"ficcao-{suffix}")
@@ -128,9 +120,6 @@ def _make_book(**overrides):
 
 
 def test_list_books_returns_a_list(client):
-    # Nao assume tabela vazia: o "como testar" deste modulo manda rodar
-    # `flask seed` antes (que ja cria 3 livros), entao um teste que
-    # exigisse `== []` seria flakey dependendo de quando rodar.
     response = client.get("/api/books/")
 
     assert response.status_code == 200
@@ -169,9 +158,6 @@ def test_get_book_not_found(client):
     assert "error" in response.get_json()
 
 
-# --- criar livro (POST) ------------------------------------------------
-
-
 def test_create_book_without_token_returns_401(client):
     response = client.post("/api/books/", json={"title": "Sem Token"})
 
@@ -184,7 +170,6 @@ def test_create_book_requires_admin(client):
         "/api/books/", json={"title": "Livro Comum"}, headers=_auth(token),
     )
 
-    # 403 e nao 401: sabemos quem e, so nao pode.
     assert response.status_code == 403
 
 
@@ -200,7 +185,7 @@ def test_create_book_as_admin(client):
     assert response.status_code == 201
     assert data["title"] == "Livro Novo"
     assert data["release_year"] == 2020
-    assert data["slug"]  # gerado pelo service a partir do titulo
+    assert data["slug"]
 
 
 def test_create_book_validates_required_title(client):
@@ -240,9 +225,6 @@ def test_create_book_rejects_duplicate_isbn(client):
 
 
 def test_create_book_rejects_bool_as_page_count(client):
-    # bool e subclasse de int em Python: int(True) == 1 passa reto pelo
-    # int() sem estourar TypeError/ValueError, entao precisa de checagem
-    # explicita pra nao aceitar true/false como numero valido.
     token = _login(client, ADMIN)
     response = client.post(
         "/api/books/",
@@ -255,8 +237,6 @@ def test_create_book_rejects_bool_as_page_count(client):
 
 
 def test_create_book_rejects_isbn_with_non_ascii_digit(client):
-    # "¹" (superscript 1) e "²" (superscript 2) passam em
-    # str.isdigit(), embora nao sejam digitos ASCII 0-9.
     token = _login(client, ADMIN)
     isbn = "97800000000¹²"
     response = client.post(
@@ -270,11 +250,6 @@ def test_create_book_rejects_isbn_with_non_ascii_digit(client):
 
 
 def test_create_book_isbn_race_condition_returns_409(client, monkeypatch):
-    # Simula duas criacoes concorrentes com o mesmo isbn13: nenhuma ve
-    # a linha da outra no SELECT de _check_isbn_unique, entao a
-    # segunda so descobre o conflito no commit (IntegrityError da
-    # constraint unique). Sem o try/except no service, isso vira 500
-    # cru em vez do 409 esperado.
     import app.services.book_service as book_service
 
     monkeypatch.setattr(book_service, "_check_isbn_unique", lambda *a, **k: None)
@@ -294,9 +269,6 @@ def test_create_book_isbn_race_condition_returns_409(client, monkeypatch):
     assert second.status_code == 409
 
 
-# --- editar livro (PUT) ------------------------------------------------
-
-
 def test_update_book_as_admin(client):
     book = _make_book()
     token = _login(client, ADMIN)
@@ -310,7 +282,6 @@ def test_update_book_as_admin(client):
 
     assert response.status_code == 200
     assert data["title"] == "Titulo Editado"
-    # Campo nao enviado no PUT continua intacto — e a edicao e parcial.
     assert data["author"]["name"] == "Autor Teste"
     assert data["slug"] == book.slug
 
@@ -333,9 +304,6 @@ def test_update_book_not_found(client):
     )
 
     assert response.status_code == 404
-
-
-# --- apagar livro (DELETE) ---------------------------------------------
 
 
 def test_delete_book_as_admin(client):

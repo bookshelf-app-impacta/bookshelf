@@ -15,7 +15,7 @@ COVER_URL_MAX = 500
 PUBLISHER_MAX = 150
 LANGUAGE_MAX = 40
 ISBN13_LEN = 13
-YEAR_MIN = 1400  # mesmo intervalo do ck_books_year no banco
+YEAR_MIN = 1400
 YEAR_MAX = 2200
 
 
@@ -30,8 +30,6 @@ def _optional_int(payload: dict, key: str) -> tuple:
     if payload.get(key) in (None, ""):
         return None, True
     value = payload[key]
-    # bool e subclasse de int em Python: sem esta checagem, int(True)
-    # vira 1 sem estourar erro nenhum.
     if isinstance(value, bool):
         return None, False
     try:
@@ -74,8 +72,6 @@ def _validate(payload: dict, *, partial: bool) -> tuple:
 
     if "isbn13" in payload or not partial:
         isbn13 = _text(payload, "isbn13") or None
-        # regex em vez de str.isdigit(): isdigit() aceita digitos
-        # Unicode fora do 0-9 ASCII (superscript, indo-arabicos etc).
         if isbn13 and not re.fullmatch(r"[0-9]{%d}" % ISBN13_LEN, isbn13):
             errors["isbn13"] = f"Deve ter {ISBN13_LEN} digitos numericos."
         data["isbn13"] = isbn13

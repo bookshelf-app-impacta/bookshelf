@@ -40,9 +40,6 @@ def _validate_shared(payload: dict, data: dict, errors: dict, *, partial: bool) 
 
     if "role" in payload or not partial:
         if "role" in payload and not isinstance(payload.get("role"), str):
-            # _text() so distingue "ausente" de "tipo errado" devolvendo
-            # "" pros dois casos — sem checar o tipo aqui, role=123 caia
-            # no fallback "user" sem erro nenhum.
             errors["role"] = "Deve ser 'user' ou 'admin'."
             role = "user"
         else:
@@ -84,9 +81,6 @@ def validate_user_update(payload) -> tuple:
     if "password" in payload:
         password = payload.get("password")
         password = password if isinstance(password, str) else ""
-        # Vazio em edicao significa "nao alterar" — diferente da criacao,
-        # onde a senha e obrigatoria. So entra no `data` (e so e validado
-        # o tamanho) se vier algo de fato.
         if password:
             if len(password) < PASSWORD_MIN:
                 errors["password"] = f"Deve ter no minimo {PASSWORD_MIN} caracteres."
