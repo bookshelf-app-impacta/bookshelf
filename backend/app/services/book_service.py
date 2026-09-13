@@ -5,6 +5,8 @@ Logica de busca, criacao, edicao e remocao de livros.
 import re
 import unicodedata
 
+from sqlalchemy.exc import IntegrityError
+
 from app.extensions import db
 from app.models.book import Author, Book, Genre
 
@@ -75,7 +77,15 @@ def create_book(data: dict, created_by: int) -> Book:
         created_by=created_by,
     )
     db.session.add(book)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        # Duas criacoes concorrentes com o mesmo isbn13 passam ambas
+        # pelo SELECT de _check_isbn_unique antes de qualquer commit —
+        # sem este catch, a segunda estoura um 500 cru em vez do 409
+        # que a primeira ja recebe.
+        db.session.rollback()
+        raise BookError("Este ISBN ja esta cadastrado.", 409)
     return book
 
 
@@ -95,7 +105,11 @@ def update_book(book_id: int, data: dict) -> Book:
     for field, value in data.items():
         setattr(book, field, value)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise BookError("Este ISBN ja esta cadastrado.", 409)
     return book
 
 
