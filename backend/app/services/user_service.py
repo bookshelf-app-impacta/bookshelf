@@ -49,16 +49,30 @@ def create_user(data: dict) -> User:
         password_hash=generate_password_hash(data["password"]),
     )
     db.session.add(user)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise UserError("Este e-mail ou nome de usuario ja esta em uso.", 409)
     return user
 
 
-def update_user(user_id: int, data: dict) -> User:
+def update_user(user_id: int, data: dict, *, requested_by: int) -> User:
     """`data` so contem os campos que vieram no corpo da requisicao (ver
     `validate_user_update`) — os demais ficam como estavam."""
     user = get_user_by_id(user_id)
     if user is None:
         raise UserError("Usuario nao encontrado.", 404)
+
+    # Sem esta checagem, o admin logado consegue se autodemover ou se
+    # autodesativar e ficar trancado fora do proprio sistema sem ter
+    # como desfazer — mesmo risco que delete_user ja bloqueia pra
+    # exclusao, so que aqui pela edicao.
+    if user_id == requested_by:
+        if data.get("role") == "user":
+            raise UserError("Nao e possivel remover o proprio nivel de admin.", 400)
+        if data.get("is_active") is False:
+            raise UserError("Nao e possivel desativar a propria conta.", 400)
 
     if "username" in data or "email" in data:
         _check_unique(
@@ -73,7 +87,11 @@ def update_user(user_id: int, data: dict) -> User:
     if password:
         user.password_hash = generate_password_hash(password)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise UserError("Este e-mail ou nome de usuario ja esta em uso.", 409)
     return user
 
 

@@ -39,9 +39,16 @@ def _validate_shared(payload: dict, data: dict, errors: dict, *, partial: bool) 
         data["display_name"] = display_name
 
     if "role" in payload or not partial:
-        role = _text(payload, "role") or "user"
-        if role not in ROLES:
+        if "role" in payload and not isinstance(payload.get("role"), str):
+            # _text() so distingue "ausente" de "tipo errado" devolvendo
+            # "" pros dois casos — sem checar o tipo aqui, role=123 caia
+            # no fallback "user" sem erro nenhum.
             errors["role"] = "Deve ser 'user' ou 'admin'."
+            role = "user"
+        else:
+            role = _text(payload, "role") or "user"
+            if role not in ROLES:
+                errors["role"] = "Deve ser 'user' ou 'admin'."
         data["role"] = role
 
     if "isActive" in payload:
