@@ -14,6 +14,7 @@ ORIGINAL_TITLE_MAX = 255
 COVER_URL_MAX = 500
 PUBLISHER_MAX = 150
 LANGUAGE_MAX = 40
+AUTHOR_NAME_MAX = 150
 ISBN13_LEN = 13
 YEAR_MIN = 1400
 YEAR_MAX = 2200
@@ -104,11 +105,11 @@ def _validate(payload: dict, *, partial: bool) -> tuple:
             errors["page_count"] = "Nao pode ser negativo."
         data["page_count"] = page_count
 
-    if "author_id" in payload or not partial:
-        author_id, ok = _optional_int(payload, "author_id")
-        if not ok:
-            errors["author_id"] = "Deve ser um numero."
-        data["author_id"] = author_id
+    if "author" in payload or not partial:
+        author = _text(payload, "author") or None
+        if author and len(author) > AUTHOR_NAME_MAX:
+            errors["author"] = f"No maximo {AUTHOR_NAME_MAX} caracteres."
+        data["author"] = author
 
     if "genre_id" in payload or not partial:
         genre_id, ok = _optional_int(payload, "genre_id")
