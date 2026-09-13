@@ -7,6 +7,8 @@ segunda convencao (camelCase) so pra entrada confundiria mais do que
 ajudaria, já que front e back leem o mesmo nome dos dois lados.
 """
 
+import re
+
 TITLE_MAX = 255
 ORIGINAL_TITLE_MAX = 255
 COVER_URL_MAX = 500
@@ -27,8 +29,13 @@ def _optional_int(payload: dict, key: str) -> tuple:
     None valido — sao os dois jeitos de "nao informei esse campo"."""
     if payload.get(key) in (None, ""):
         return None, True
+    value = payload[key]
+    # bool e subclasse de int em Python: sem esta checagem, int(True)
+    # vira 1 sem estourar erro nenhum.
+    if isinstance(value, bool):
+        return None, False
     try:
-        return int(payload[key]), True
+        return int(value), True
     except (TypeError, ValueError):
         return None, False
 
@@ -67,7 +74,9 @@ def _validate(payload: dict, *, partial: bool) -> tuple:
 
     if "isbn13" in payload or not partial:
         isbn13 = _text(payload, "isbn13") or None
-        if isbn13 and (not isbn13.isdigit() or len(isbn13) != ISBN13_LEN):
+        # regex em vez de str.isdigit(): isdigit() aceita digitos
+        # Unicode fora do 0-9 ASCII (superscript, indo-arabicos etc).
+        if isbn13 and not re.fullmatch(r"[0-9]{%d}" % ISBN13_LEN, isbn13):
             errors["isbn13"] = f"Deve ter {ISBN13_LEN} digitos numericos."
         data["isbn13"] = isbn13
 
