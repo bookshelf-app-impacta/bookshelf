@@ -269,6 +269,31 @@ def test_create_book_rejects_isbn_with_non_ascii_digit(client):
     assert "isbn13" in response.get_json()["fields"]
 
 
+def test_create_book_isbn_race_condition_returns_409(client, monkeypatch):
+    # Simula duas criacoes concorrentes com o mesmo isbn13: nenhuma ve
+    # a linha da outra no SELECT de _check_isbn_unique, entao a
+    # segunda so descobre o conflito no commit (IntegrityError da
+    # constraint unique). Sem o try/except no service, isso vira 500
+    # cru em vez do 409 esperado.
+    import app.services.book_service as book_service
+
+    monkeypatch.setattr(book_service, "_check_isbn_unique", lambda *a, **k: None)
+
+    token = _login(client, ADMIN)
+    headers = _auth(token)
+    isbn = "9780000000099"
+
+    first = client.post(
+        "/api/books/", json={"title": "Primeiro Race", "isbn13": isbn}, headers=headers,
+    )
+    assert first.status_code == 201
+
+    second = client.post(
+        "/api/books/", json={"title": "Segundo Race", "isbn13": isbn}, headers=headers,
+    )
+    assert second.status_code == 409
+
+
 # --- editar livro (PUT) ------------------------------------------------
 
 
