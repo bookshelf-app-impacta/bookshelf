@@ -269,6 +269,68 @@ def test_create_book_isbn_race_condition_returns_409(client, monkeypatch):
     assert second.status_code == 409
 
 
+def test_create_book_with_new_author_creates_it(client):
+    token = _login(client, ADMIN)
+    response = client.post(
+        "/api/books/",
+        json={"title": "Livro Com Autor Novo", "author": "Autor Inedito XYZ"},
+        headers=_auth(token),
+    )
+    data = response.get_json()
+
+    assert response.status_code == 201
+    assert data["author"]["name"] == "Autor Inedito XYZ"
+    assert db.session.query(Author).filter_by(name="Autor Inedito XYZ").count() == 1
+
+
+def test_create_book_reuses_existing_author(client):
+    token = _login(client, ADMIN)
+    headers = _auth(token)
+
+    first = client.post(
+        "/api/books/",
+        json={"title": "Primeiro Com Autor", "author": "Autor Repetido"},
+        headers=headers,
+    )
+    second = client.post(
+        "/api/books/",
+        json={"title": "Segundo Com Autor", "author": "Autor Repetido"},
+        headers=headers,
+    )
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert first.get_json()["author"]["id"] == second.get_json()["author"]["id"]
+    assert db.session.query(Author).filter_by(name="Autor Repetido").count() == 1
+
+
+def test_create_book_rejects_author_name_too_long(client):
+    token = _login(client, ADMIN)
+    response = client.post(
+        "/api/books/",
+        json={"title": "Autor Longo Demais", "author": "A" * 151},
+        headers=_auth(token),
+    )
+
+    assert response.status_code == 400
+    assert "author" in response.get_json()["fields"]
+
+
+def test_update_book_can_set_author(client):
+    book = _make_book(author_id=None)
+    token = _login(client, ADMIN)
+
+    response = client.put(
+        f"/api/books/{book.id}",
+        json={"author": "Nome Novo Do Autor"},
+        headers=_auth(token),
+    )
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert data["author"]["name"] == "Nome Novo Do Autor"
+
+
 def test_update_book_as_admin(client):
     book = _make_book()
     token = _login(client, ADMIN)
