@@ -26,15 +26,18 @@ parecidas entre si.
 - **Autenticação e papéis** (`/api/auth`, `role` em `users`) — o "aluno" da
   proposta é o `role = user` que já existe. Não precisa de papel novo nem de
   tabela nova pra representar aluno.
-- **CRUD de usuário pelo admin** (`/api/users`, tela `/admin/usuarios`) — já
-  cobre boa parte do que R002 "cadastro de alunos" pediria. Ver detalhe
-  abaixo.
+- **Cadastro self-service** (`POST /api/auth/register`) — já é exatamente o
+  fluxo "aluno se cadastra sozinho" que R002 propõe. Falta só um campo. Ver
+  detalhe abaixo.
+- **CRUD de usuário pelo admin** (`/api/users`, tela `/admin/usuarios`) —
+  continua existindo pra gerenciar aluno depois de cadastrado (editar,
+  desativar, excluir).
 
 ## Cronograma proposto
 
 | Entrega | Data | Cartão | Funcionalidade proposta | Custo |
 |---|---|---|---|---|
-| AC2 | 13/10 | R002 | Cadastro de alunos | Baixo — reaproveita `/api/users` existente |
+| AC2 | 13/10 | R002 | Cadastro de alunos | Baixo — reaproveita `/api/auth/register` existente, self-service |
 | AC3 | 08/11 | R003 | Empréstimo de livro | Médio — tabela e endpoints novos |
 | Final | 22/11 | R004 | Devolução de livro + histórico de empréstimos | Baixo — fecha o ciclo do R003, sem tabela nova |
 
@@ -43,20 +46,26 @@ mesmo número de entregas, mesma cadência. O que muda é o domínio.
 
 ## R002 — Cadastro de alunos
 
-Hoje já existe `POST/GET/PUT/DELETE /api/users` protegido por
-`@admin_required` (`backend/app/blueprints/users.py`), e a tela
-`/admin/usuarios` no frontend. Pra virar "cadastro de alunos" de verdade,
-falta decidir:
+**Self-service, não pelo admin.** Já existe `POST /api/auth/register`
+(`backend/app/blueprints/auth.py`), público, sem exigir login nem admin —
+qualquer um se cadastra sozinho e já nasce com `role = user`. É exatamente o
+fluxo "aluno se cadastra". Fica mais barato que a alternativa de admin
+cadastrar cada aluno pelo painel `/api/users`: essa rota já existe, só falta
+um campo.
 
-- **Renomear ou só reinterpretar?** Op. A: manter tudo como está (`User`,
-  `/api/users`), tratar "aluno" como sinônimo de `role = user` na
-  documentação e na UI (rótulos em português: "Aluno" em vez de "Usuário").
-  Op. B: adicionar uma coluna `registration_number` (matrícula) em `users`,
-  opcional, exclusiva de quem tem `role = user`. Recomendo op. B: 1 coluna
-  nova, 1 migration pequena, mais alinhado com "sistema de biblioteca" de
-  verdade (aluno tem matrícula).
-- Endpoints e tabela continuam em inglês, como já é hoje (`users`,
-  `/api/users`) — não muda nada nesse quesito.
+- **Adicionar `registration_number`** (RA/matrícula) em `users`: coluna nova
+  (`VARCHAR`, `UNIQUE`, nullable — admin criado por `flask seed` não tem
+  RA), migration pequena. Entra em `validate_register`
+  (`backend/app/schemas/auth.py`) como campo obrigatório só nesse formulário
+  — login continua só com e-mail/senha.
+- O painel admin (`/api/users`, tela `/admin/usuarios`) continua existindo
+  pra listar/editar/desativar aluno depois de cadastrado — só a **criação**
+  deixa de ser feita por lá.
+- Sem verificação do RA contra uma lista de matrículas válidas da escola
+  (não tem essa base pra consultar). Aceita qualquer valor informado,
+  único no banco — suficiente pro escopo da disciplina.
+- Endpoint e tabela continuam em inglês (`/api/auth/register`, coluna
+  `registration_number` em `users`) — não muda nada nesse quesito.
 
 ## R003 — Empréstimo de livro
 
@@ -118,7 +127,8 @@ Na tela: lista de empréstimos ativos com botão "Devolver" ao lado de cada um
 ## Perguntas em aberto pro grupo
 
 1. Aceita a troca de rumo? (é o principal — o resto é detalhe de como)
-2. R002: reaproveitar `users` como está, ou adicionar `registration_number`?
+2. R002: cadastro do aluno fica self-service (`/api/auth/register` + RA) como
+   proposto, ou o grupo prefere manter pelo painel do admin?
 3. R003: 1 exemplar por livro (op. A) ou quantidade de exemplares (op. B)?
 4. Multa/penalidade por atraso entra no escopo, ou fica de fora (só marca
    "atrasado" visualmente, sem consequência)?
