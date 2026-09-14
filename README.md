@@ -93,6 +93,7 @@ docs/       documentação do projeto
 - [Entregas e cronograma](docs/ENTREGAS.md)
 - [Fluxo de trabalho no Git](docs/GIT-WORKFLOW.md)
 - [Banco de dados](docs/BANCO-DE-DADOS.md)
+- [Proposta: virar sistema de biblioteca](docs/PROPOSTA-BIBLIOTECA.md) — em discussão, ainda não decidido
 
 ## Equipe
 
