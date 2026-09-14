@@ -26,9 +26,9 @@ parecidas entre si.
 - **Autenticação e papéis** (`/api/auth`, `role` em `users`) — o "aluno" da
   proposta é o `role = user` que já existe. Não precisa de papel novo nem de
   tabela nova pra representar aluno.
-- **Cadastro self-service** (`POST /api/auth/register`) — já é exatamente o
-  fluxo "aluno se cadastra sozinho" que R002 propõe. Falta só um campo. Ver
-  detalhe abaixo.
+- **Cadastro self-service no backend** (`POST /api/auth/register`) — já é
+  exatamente o fluxo "aluno se cadastra sozinho" que R002 propõe, mas sem
+  tela no frontend ainda. Ver detalhe abaixo.
 - **CRUD de usuário pelo admin** (`/api/users`, tela `/admin/usuarios`) —
   continua existindo pra gerenciar aluno depois de cadastrado (editar,
   desativar, excluir).
@@ -37,7 +37,7 @@ parecidas entre si.
 
 | Entrega | Data | Cartão | Funcionalidade proposta | Custo |
 |---|---|---|---|---|
-| AC2 | 13/10 | R002 | Cadastro de alunos | Baixo — reaproveita `/api/auth/register` existente, self-service |
+| AC2 | 13/10 | R002 | Cadastro de alunos | Baixo — backend (`/api/auth/register`) já existe; falta tela nova no frontend + campo de RA |
 | AC3 | 08/11 | R003 | Empréstimo de livro | Médio — tabela e endpoints novos |
 | Final | 22/11 | R004 | Devolução de livro + histórico de empréstimos | Baixo — fecha o ciclo do R003, sem tabela nova |
 
@@ -49,23 +49,42 @@ mesmo número de entregas, mesma cadência. O que muda é o domínio.
 **Self-service, não pelo admin.** Já existe `POST /api/auth/register`
 (`backend/app/blueprints/auth.py`), público, sem exigir login nem admin —
 qualquer um se cadastra sozinho e já nasce com `role = user`. É exatamente o
-fluxo "aluno se cadastra". Fica mais barato que a alternativa de admin
-cadastrar cada aluno pelo painel `/api/users`: essa rota já existe, só falta
-um campo.
+fluxo "aluno se cadastra".
+
+**Mas só existe no backend.** O frontend hoje não tem tela de cadastro
+nenhuma — só `/login` (`frontend/src/app/(auth)/login/`), sem link "criar
+conta", sem `register()` em `lib/api/auth.ts`. Testado (`curl`), o endpoint
+funciona; ninguém consegue usá-lo pela interface. Então R002, na prática, é:
 
 - **Adicionar `registration_number`** (RA/matrícula) em `users`: coluna nova
   (`VARCHAR`, `UNIQUE`, nullable — admin criado por `flask seed` não tem
   RA), migration pequena. Entra em `validate_register`
   (`backend/app/schemas/auth.py`) como campo obrigatório só nesse formulário
   — login continua só com e-mail/senha.
+- **Tabela nova `colleges`** (faculdade): `id`, `name`, `slug` — mesmo padrão
+  de `authors`/`genres`. O aluno escolhe uma no cadastro (`college_id` em
+  `users`, FK, nullable — usuários existentes/admin não têm). `flask seed`
+  cria uma linha inicial: **"Faculdade Impacta"**. Se o grupo quiser cadastrar
+  outra faculdade depois, é só adicionar outra linha (via seed ou, se
+  precisar, um `POST /api/colleges/` admin-only — não obrigatório pra R002,
+  dá pra deixar só leitura por enquanto e crescer depois).
+- **`GET /api/colleges/`** — público (a tela de cadastro é pública, roda
+  antes de existir login), lista as faculdades pra popular o dropdown. Com
+  só "Faculdade Impacta" cadastrada, o dropdown nasce com essa opção
+  pré-selecionada; se um dia tiver mais de uma, o aluno escolhe livremente.
+- **Criar a tela `/cadastro` no frontend** — não existe, é página nova
+  (mesmo padrão de `livros/novo`: form + `lib/api/auth.ts` ganha
+  `register()`), com o dropdown de faculdade carregado desse endpoint, e um
+  link "Criar conta" na tela de login.
 - O painel admin (`/api/users`, tela `/admin/usuarios`) continua existindo
   pra listar/editar/desativar aluno depois de cadastrado — só a **criação**
   deixa de ser feita por lá.
 - Sem verificação do RA contra uma lista de matrículas válidas da escola
   (não tem essa base pra consultar). Aceita qualquer valor informado,
   único no banco — suficiente pro escopo da disciplina.
-- Endpoint e tabela continuam em inglês (`/api/auth/register`, coluna
-  `registration_number` em `users`) — não muda nada nesse quesito.
+- Endpoints e tabelas continuam em inglês (`/api/auth/register`,
+  `/api/colleges/`, tabela `colleges`, coluna `registration_number` em
+  `users`) — não muda nada nesse quesito.
 
 ## R003 — Empréstimo de livro
 
@@ -129,10 +148,13 @@ Na tela: lista de empréstimos ativos com botão "Devolver" ao lado de cada um
 1. Aceita a troca de rumo? (é o principal — o resto é detalhe de como)
 2. R002: cadastro do aluno fica self-service (`/api/auth/register` + RA) como
    proposto, ou o grupo prefere manter pelo painel do admin?
-3. R003: 1 exemplar por livro (op. A) ou quantidade de exemplares (op. B)?
-4. Multa/penalidade por atraso entra no escopo, ou fica de fora (só marca
+3. R002: `colleges` fica só leitura por enquanto (cresce via seed/direto no
+   banco), ou já entra um `POST /api/colleges/` admin-only pra cadastrar
+   faculdade pela tela?
+4. R003: 1 exemplar por livro (op. A) ou quantidade de exemplares (op. B)?
+5. Multa/penalidade por atraso entra no escopo, ou fica de fora (só marca
    "atrasado" visualmente, sem consequência)?
-5. Quem fica responsável por cada card, igual foi feito nas entregas
+6. Quem fica responsável por cada card, igual foi feito nas entregas
    anteriores?
 
 ## Se aprovado, o que muda em outros documentos
