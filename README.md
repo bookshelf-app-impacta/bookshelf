@@ -101,7 +101,13 @@ Sete integrantes. Como o repositório é público, aqui ficam só os usuários d
 <!-- Preencher com os usuários do GitHub dos 7 integrantes -->
 
 - [@gustavofds](https://github.com/gustavofds)
-
+- [@anaferreg](https://github.com/anaferreg)
+- [@BManaf](https://github.com/BManaf)
+- [@HGCAVALCANTE](https://github.com/HGCAVALCANTE)
+- [@lelevaa](https://github.com/lelevaa)
+- [@TabathaPaola](https://github.com/TabathaPaola)
+- Carlos Rodrigo
+- 
 ## Board
 
 Trello: <!-- colar o link do board aqui -->
