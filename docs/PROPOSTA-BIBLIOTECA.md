@@ -131,6 +131,23 @@ opções:
 | `GET /api/loans/` | admin | Lista empréstimos, com filtro `?status=active\|overdue\|returned` e `?user_id=` |
 | `GET /api/loans/<id>` | admin | Detalhe de um empréstimo |
 
+### Frontend
+
+Só admin acessa (mesmo guard `RequireAdmin` que já protege `/livros/novo`):
+
+- **Tela `/admin/emprestimos`** (nova) — lista os empréstimos (reaproveita o
+  `GET /api/loans/` com os filtros de status), com badge visual pro status
+  (emprestado / atrasado / devolvido — cor diferente, ex. atrasado em
+  vermelho).
+- **Botão "Emprestar" no card do livro** (`BookGrid.tsx`) — só aparece pra
+  admin e só em livro disponível (o próprio `GET /api/books/` já teria que
+  informar se tem empréstimo aberto, ou o front checa contra a lista de
+  `loans` ativos). Abre um modal (mesmo padrão de `EditBookModal.tsx`) pra
+  escolher o aluno (dropdown, carregado de `GET /api/users/`) e o prazo
+  (`due_date`).
+- Client novo `lib/api/loans.ts` (mesmo padrão de `lib/api/books.ts`):
+  `listLoans`, `createLoan`.
+
 ## R004 — Devolução de livro + histórico
 
 Não precisa de tabela nova, só fecha o ciclo do `loans`:
@@ -140,8 +157,11 @@ Não precisa de tabela nova, só fecha o ciclo do `loans`:
 | `PUT /api/loans/<id>/return` | admin | Marca `returned_at = agora` |
 | `GET /api/loans/?user_id=<id>` | admin | Histórico de empréstimos de um aluno (já coberto pelo `GET /api/loans/` do R003, com filtro) |
 
-Na tela: lista de empréstimos ativos com botão "Devolver" ao lado de cada um
-— mesmo padrão dos botões de editar/excluir que já existem em `BookGrid.tsx`.
+Não precisa de tela nova — usa a mesma `/admin/emprestimos` do R003: cada
+linha de empréstimo ativo ganha um botão "Devolver" (mesmo padrão dos ícones
+de editar/excluir que já existem em `BookGrid.tsx`), que chama
+`returnLoan(id)` (novo, em `lib/api/loans.ts`). O filtro de status na mesma
+tela já cobre o "histórico" (trocar pra `?status=returned` ou por aluno).
 
 ## Perguntas em aberto pro grupo
 
