@@ -17,7 +17,7 @@ export function DeleteUserModal({ user, onClose, onConfirm }: DeleteUserModalPro
 
   if (!user) return null;
 
-  async function handleConfirm() {
+  const handleConfirm = async () => {
     setErro(null);
     setExcluindo(true);
 
@@ -33,7 +33,7 @@ export function DeleteUserModal({ user, onClose, onConfirm }: DeleteUserModalPro
     } finally {
       setExcluindo(false);
     }
-  }
+  };
 
   //retorna um html
   return (

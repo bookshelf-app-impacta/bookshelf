@@ -47,7 +47,7 @@ export function EditUserModal({ user, onClose, onSave }: EditUserModalProps) {
     setAvatarPreview(URL.createObjectURL(file));// gera uma URL temporária só pra mostrar a prévia na tela
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro(null);
     setSalvando(true);
@@ -69,7 +69,7 @@ export function EditUserModal({ user, onClose, onSave }: EditUserModalProps) {
     } finally {
       setSalvando(false);
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
