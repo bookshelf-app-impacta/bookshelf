@@ -16,7 +16,7 @@ export function DeleteBookModal({ book, onClose, onDeleted }: DeleteBookModalPro
 
   if (!book) return null;
 
-  async function handleConfirm() {
+  const handleConfirm = async () => {
     setErro(null);
     setExcluindo(true);
 
@@ -29,7 +29,7 @@ export function DeleteBookModal({ book, onClose, onDeleted }: DeleteBookModalPro
     } finally {
       setExcluindo(false);
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

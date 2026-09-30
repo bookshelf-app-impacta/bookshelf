@@ -45,7 +45,7 @@ export function EditBookModal({ book, onClose, onSave }: EditBookModalProps) {
 
   if (!book) return null;
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro(null);
     setSalvando(true);
@@ -70,7 +70,7 @@ export function EditBookModal({ book, onClose, onSave }: EditBookModalProps) {
     } finally {
       setSalvando(false);
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
