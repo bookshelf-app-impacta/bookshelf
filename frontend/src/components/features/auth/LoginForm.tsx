@@ -87,6 +87,12 @@ export function LoginForm() {
         >
           {carregando ? "Entrando..." : "SIGN IN"}
         </button>
+        <p className="text-center text-xs text-gray-500">
+          Não tem conta?{" "}
+          <Link href="/registro" className="text-blue-700 font-semibold underline">
+            Cadastre-se
+          </Link>
+        </p>
       </form>
     </div>
   );

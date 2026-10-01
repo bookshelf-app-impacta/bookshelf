@@ -1,15 +1,50 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { register } from "@/lib/api/auth";
+import { saveSession } from "@/lib/auth";
+import { ApiError } from "@/lib/errors";
+
+type FieldErrors = Record<string, string>;
 
 export function RegisterForm() {
+  const router = useRouter();
+
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [nome, setNome] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [erro, setErro] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setErro(null);
+    setFieldErrors({});
+    setCarregando(true);
+    try {
+      const { token, user } = await register({
+        username,
+        email,
+        password: senha,
+        displayName: nome || undefined,
+      });
+      saveSession(token, user);
+      router.push("/");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setFieldErrors(err.fields ?? {});
+        setErro(err.fields ? null : err.message);
+      } else {
+        setErro("Não foi possível criar a conta.");
+      }
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -36,6 +71,9 @@ export function RegisterForm() {
             maxLength={30}
             required
           />
+          {fieldErrors.username && (
+            <p className="text-red-600 text-xs mt-1">{fieldErrors.username}</p>
+          )}
         </div>
 
         <div>
@@ -50,6 +88,9 @@ export function RegisterForm() {
             maxLength={255}
             required
           />
+          {fieldErrors.email && (
+            <p className="text-red-600 text-xs mt-1">{fieldErrors.email}</p>
+          )}
         </div>
 
         <div>
@@ -64,6 +105,9 @@ export function RegisterForm() {
             minLength={8}
             required
           />
+          {fieldErrors.password && (
+            <p className="text-red-600 text-xs mt-1">{fieldErrors.password}</p>
+          )}
         </div>
 
         <div>
@@ -76,14 +120,27 @@ export function RegisterForm() {
             className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
             maxLength={80}
           />
+          {fieldErrors.displayName && (
+            <p className="text-red-600 text-xs mt-1">{fieldErrors.displayName}</p>
+          )}
         </div>
+
+        {erro && <p className="text-red-600 text-sm">{erro}</p>}
 
         <button
           type="submit"
-          className="bg-blue-800 text-white rounded-lg py-2 text-sm font-semibold hover:bg-blue-900"
+          disabled={carregando}
+          className="bg-blue-800 text-white rounded-lg py-2 text-sm font-semibold hover:bg-blue-900 disabled:opacity-60"
         >
-          CADASTRAR
+          {carregando ? "Cadastrando..." : "CADASTRAR"}
         </button>
+
+        <p className="text-center text-xs text-gray-500">
+          Já tem conta?{" "}
+          <Link href="/login" className="text-blue-700 font-semibold underline">
+            Entrar
+          </Link>
+        </p>
       </form>
     </div>
   );
