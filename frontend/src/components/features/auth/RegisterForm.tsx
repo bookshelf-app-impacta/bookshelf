@@ -1,15 +1,50 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { register } from "@/lib/api/auth";
+import { saveSession } from "@/lib/auth";
+import { ApiError } from "@/lib/errors";
+
+type FieldErrors = Record<string, string>;
 
 export function RegisterForm() {
+  const router = useRouter();
+
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [nome, setNome] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [erro, setErro] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setErro(null);
+    setFieldErrors({});
+    setCarregando(true);
+    try {
+      const { token, user } = await register({
+        username,
+        email,
+        password: senha,
+        displayName: nome || undefined,
+      });
+      saveSession(token, user);
+      router.push("/");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setFieldErrors(err.fields ?? {});
+        setErro(err.fields ? null : err.message);
+      } else {
+        setErro("Não foi possível criar a conta.");
+      }
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
