@@ -15,6 +15,11 @@ export function getCurrentUser(): User | null {
   }
 }
 
+export function saveSession(token: string, user: User): void {
+  localStorage.setItem("token", token);
+  localStorage.setItem("user", JSON.stringify(user));
+}
+
 // Usado no "Sair" do Header. So limpa o client — nao existe sessao no
 // servidor pra invalidar, o token so perde validade quando expira.
 export function clearSession(): void {
