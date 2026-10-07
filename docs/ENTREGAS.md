@@ -7,7 +7,7 @@ A disciplina tem 4 entregas: três ACs e uma entrega final que vale a nota da pr
 | Entrega | Data | Cartão do board | Funcionalidade |
 |---|---|---|---|
 | AC1 | 14/09 | R001 | Cadastro de livros |
-| AC2 | 13/10 | R002 | Avaliação de livro — comentários |
+| AC2 | 13/10 | R002 | Cadastro de usuários |
 | AC3 | 08/11 | R003 | Avaliação de livro — notas |
 | Final | 22/11 | R004 | Favoritos |
 
