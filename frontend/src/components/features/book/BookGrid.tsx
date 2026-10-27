@@ -75,21 +75,28 @@ export function BookGrid({ initialBooks }: BookGridProps) {
                 </div>
               )}
 
-              <div className="h-40 w-full bg-gray-100 rounded-lg mb-2 overflow-hidden flex items-center justify-center text-gray-400 text-xs">
-                {book.cover_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={book.cover_url}
-                    alt={book.title}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  "Sem capa"
-                )}
-              </div>
-              <p className="font-semibold text-sm truncate">{book.title}</p>
-              <p className="text-xs text-gray-500">{book.author?.name ?? "Autor desconhecido"}</p>
-              {book.release_year && <p className="text-xs text-gray-400">{book.release_year}</p>}
+              {/* O Link envolve so a capa e os textos. Os botoes de admin
+                  acima ficam FORA dele: dentro de um <a>, clicar no lapis
+                  ou na lixeira tambem navegaria pra pagina do livro. */}
+              <Link href={`/livros/${book.id}`} className="group flex flex-col gap-1">
+                <div className="h-40 w-full bg-gray-100 rounded-lg mb-2 overflow-hidden flex items-center justify-center text-gray-400 text-xs">
+                  {book.cover_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={book.cover_url}
+                      alt={book.title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    "Sem capa"
+                  )}
+                </div>
+                <p className="font-semibold text-sm truncate group-hover:underline">
+                  {book.title}
+                </p>
+                <p className="text-xs text-gray-500">{book.author?.name ?? "Autor desconhecido"}</p>
+                {book.release_year && <p className="text-xs text-gray-400">{book.release_year}</p>}
+              </Link>
             </div>
           ))}
         </div>
