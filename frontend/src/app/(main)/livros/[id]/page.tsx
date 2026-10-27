@@ -2,16 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, ChevronLeft } from "lucide-react";
 import { getBook } from "@/lib/api/books";
+import { ReviewList } from "@/components/features/review/ReviewList";
 import type { Book } from "@/types/book";
 
 type LivroPageProps = {
-  // No Next 15+ os params chegam como Promise — por isso o await abaixo.
   params: Promise<{ id: string }>;
 };
 
-// Server Component (igual a Home): o livro e publico, entao da pra
-// buscar no servidor. Os comentarios vao ser client components, porque
-// precisam do token e do usuario que vivem no localStorage.
+// Server Component
 export default async function LivroPage({ params }: LivroPageProps) {
   const { id: idParam } = await params;
   const id = Number(idParam);
@@ -119,10 +117,7 @@ export default async function LivroPage({ params }: LivroPageProps) {
 
         <section className="lg:col-start-1">
           <h2 className="mb-3 text-lg font-bold">Comentários</h2>
-          {/* Proximo passo: lista de comentarios + ReviewForm no lugar deste aviso. */}
-          <div className="rounded-xl border border-dashed border-gray-300 p-6 text-sm text-gray-400">
-            Os comentários vão aparecer aqui.
-          </div>
+          <ReviewList bookId={book.id} />
         </section>
       </div>
     </div>
