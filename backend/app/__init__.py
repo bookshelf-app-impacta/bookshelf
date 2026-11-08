@@ -42,6 +42,9 @@ def create_app(config_object: type = Config) -> Flask:
 
     from app.blueprints.users import bp as users_bp
     app.register_blueprint(users_bp, url_prefix="/api/users")
+
+    from app.blueprints.reviews import bp as reviews_bp
+    app.register_blueprint(reviews_bp, url_prefix="/api")
     # ----------------------------------------------------------------
 
     @app.get("/api/health")
