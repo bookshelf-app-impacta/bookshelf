@@ -74,3 +74,27 @@ def validate_review_payload(payload: dict) -> tuple[dict, dict]:
         data["consumed_on"] = None
 
     return errors, data
+
+def review_to_json(review) -> dict:
+    """Contrato com o `type Review` de frontend/src/types/review.ts — por
+    isso camelCase. `rating` sai como float: Decimal nao e serializavel
+    pelo jsonify e o front trata a nota como number."""
+    user = review.user
+    return {
+        "id": review.id,
+        "bookId": review.book_id,
+        "body": review.body,
+        "rating": float(review.rating) if review.rating is not None else None,
+        "createdAt": review.created_at.isoformat(),
+        "updatedAt": review.updated_at.isoformat(),
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "displayName": user.display_name,
+            "avatarUrl": user.avatar_url,
+        },
+    }
+
+
+def reviews_to_json_list(reviews) -> list[dict]:
+    return [review_to_json(review) for review in reviews]
