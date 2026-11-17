@@ -17,7 +17,9 @@ export type Review = {
   user: ReviewAuthor;
 };
 
-// Corpo de POST/PUT
+// Corpo de POST/PUT.O backend exige pelo menos um dos dois
+// (rating ou body) e a nota vai de 0.5 a 5.0 em passos de 0.5.
 export type ReviewInput = {
-  body: string;
+  body?: string | null;
+  rating?: number | null;
 };
