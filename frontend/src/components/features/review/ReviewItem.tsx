@@ -1,8 +1,9 @@
 import type { Review } from "@/types/review";
+import { StarRating } from "./StarRating";
 
 type ReviewItemProps = {
   review: Review;
-  // Dono do comentario: so ele ve Editar/Excluir. Esconder o botao e so
+  // Dono da avaliacao: so ele ve Editar/Excluir. Esconder o botao e so
   // conforto — quem barra de verdade e o backend (403 se nao for o autor).
   isOwn: boolean;
   onEdit: () => void;
@@ -39,9 +40,17 @@ export function ReviewItem({ review, isOwn, onEdit, onDelete }: ReviewItemProps)
           </time>
         </div>
 
-        <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-gray-700">
-          {review.body}
-        </p>
+        {review.rating !== null && (
+          <div className="mt-1">
+            <StarRating value={review.rating} size={14} />
+          </div>
+        )}
+
+        {review.body && (
+          <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-gray-700">
+            {review.body}
+          </p>
+        )}
 
         {isOwn && (
           <div className="mt-2 flex gap-4 text-xs font-semibold">

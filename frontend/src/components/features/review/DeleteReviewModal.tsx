@@ -28,7 +28,7 @@ export function DeleteReviewModal({ review, onClose, onDeleted }: DeleteReviewMo
     } catch (err) {
       // Mostra o erro na propria janela (403 se nao for o autor, 401 se
       // a sessao expirou) em vez de fechar sem nada acontecer.
-      setErro(err instanceof ApiError ? err.message : "Não foi possível excluir o comentário.");
+      setErro(err instanceof ApiError ? err.message : "Não foi possível excluir a avaliação.");
     } finally {
       setExcluindo(false);
     }
@@ -37,9 +37,9 @@ export function DeleteReviewModal({ review, onClose, onDeleted }: DeleteReviewMo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-sm rounded-lg bg-white p-6 text-center">
-        <h2 className="mb-2 text-lg font-semibold">Excluir comentário</h2>
+        <h2 className="mb-2 text-lg font-semibold">Excluir avaliação</h2>
         <p className="mb-4 text-sm text-gray-500">
-          Tem certeza que deseja excluir seu comentário? Essa ação não pode ser desfeita.
+          Tem certeza que deseja excluir sua avaliação? Essa ação não pode ser desfeita.
         </p>
 
         {erro && <p className="mb-4 text-sm text-red-600">{erro}</p>}

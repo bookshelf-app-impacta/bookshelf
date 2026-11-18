@@ -15,6 +15,8 @@ Este projeto foi criado com [`create-next-app`](https://nextjs.org/docs/app/api-
 - [x] Gerenciamento de usuários pelo admin (`/admin/usuarios`) — listar, adicionar, editar, ativar/desativar, excluir, todos ligados à API real
 - [x] Cliente HTTP apontando para a API (`src/lib/api/`) — nada mais usa dados mockados
 - [x] Proteção de rotas por `role` no client (`RequireAdmin`) — ver limitação abaixo
+- [x] Página do livro (`/livros/[id]`) — banner com média das notas, sinopse, detalhes e avaliações (listar, criar, editar e excluir; editar e excluir dependem do `PUT`/`DELETE /api/reviews/:id` no backend)
+- [x] Nota do livro (R004) — estrelas de 0,5 a 5,0 no formulário e nas avaliações, média no banner
 
 ## Getting Started
 
@@ -46,7 +48,7 @@ src/
 │   │   │       └── page.tsx            # gerenciamento de usuários (admin cadastra, não há auto-cadastro)
 │   │   ├── livros/
 │   │   │   ├── novo/                   # R001 — cadastro de livro (admin-only)
-│   │   │   └── [id]/                   # R002/R003 — comentário e nota (ainda nao existe)
+│   │   │   └── [id]/                   # R003/R004 — detalhe do livro: banner com média, sinopse, ficha e avaliações
 │   │   └── favoritos/                  # R004 (ainda nao existe)
 │   ├── layout.tsx                       # layout raiz (fonte, <html>/<body>)
 │   └── icon.svg                          # favicon
@@ -68,6 +70,12 @@ src/
 │       │   ├── BookGrid.tsx          # grade de livros + acoes de editar/excluir (admin)
 │       │   ├── EditBookModal.tsx     # popup de edição (PUT /api/books/:id)
 │       │   └── DeleteBookModal.tsx   # popup de confirmação de exclusão (DELETE /api/books/:id)
+│       ├── review/
+│       │   ├── ReviewForm.tsx        # formulário de avaliação: nota (StarRating) e/ou comentário
+│       │   ├── ReviewItem.tsx        # uma avaliação: autor, estrelas, texto e Editar/Excluir (só do dono)
+│       │   ├── ReviewList.tsx        # lista + formulário; atualiza a média do banner via router.refresh()
+│       │   ├── DeleteReviewModal.tsx # confirmação de exclusão (DELETE /api/reviews/:id)
+│       │   └── StarRating.tsx        # estrelas de 0.5 a 5.0, só leitura ou interativo
 │       └── user/
 │           ├── UsersToolbar.tsx      # busca (filtra de verdade) + botão "Adicionar Usuário"
 │           ├── UserTable.tsx         # tabela de usuários (usa components/ui/Table)
@@ -79,25 +87,30 @@ src/
 │   ├── api/
 │   │   ├── auth.ts                  # login
 │   │   ├── books.ts                 # listar/criar/editar/apagar livro
+│   │   ├── reviews.ts               # listar/criar/editar/apagar avaliação
 │   │   └── users.ts                 # listar/criar/editar/apagar usuário (admin)
 │   ├── auth.ts                      # getCurrentUser()/clearSession() — le o localStorage
+│   ├── errors.ts                    # ApiError (mensagem + erros por campo)
+│   ├── rating.ts                    # calcularMedia() e formatarNota()
 │   └── utils/
 │
 └── types/
     ├── book.ts                       # Book, BookInput (espelha backend/app/schemas/book_schema.py)
+    ├── review.ts                     # Review, ReviewInput (camelCase, igual ao review_to_json do backend)
     └── user.ts                       # User: id, username, email, displayName?, avatarUrl?, role, isActive
 ```
 
 ### Convenções
 
 - `app/` só cuida de roteamento — a UI em si vive em `components/features/`.
-- `components/features/` é dividido por domínio (`auth`, `book`, `user`) para reduzir conflito de merge entre quem está trabalhando em partes diferentes do frontend.
+- `components/features/` é dividido por domínio (`auth`, `book`, `review`, `user`) para reduzir conflito de merge entre quem está trabalhando em partes diferentes do frontend.
 - `components/ui/` guarda componentes genéricos, sem lógica de negócio (ex.: `Table.tsx` não sabe o que é um "usuário", só sabe desenhar linhas e colunas).
 - Toda chamada à API passa por `src/lib/api/` — cada arquivo espelha um blueprint do backend Flask (`blueprints/users` ↔ `lib/api/users.ts`). Assim, quando a URL base mudar ou for preciso enviar autenticação, muda em um lugar só.
 - `(auth)` é para rotas **sem** o usuário autenticado (login); `(main)` é para rotas **com** o Header.
 - Não existe cadastro público de usuário — **o admin cadastra os usuários** pelo painel em `/admin/usuarios`.
 - Livros e usuários de `/livros/novo` e `/admin/usuarios` são protegidos pelo `RequireAdmin` — mas é uma proteção **só de client**: o login aqui é token em `localStorage`, sem cookie de sessão, então o middleware do Next (que roda no servidor) não tem como ler isso antes de mandar o HTML. A segurança de fato está no backend (`@admin_required` em toda rota de escrita); o guard do frontend é só pra não deixar a tela de alguém sem permissão aberta por engano.
 - Upload de avatar (nos modais de usuário) é só preview local (`blob:` do navegador) — não existe endpoint de upload de arquivo no backend ainda, então isso não é enviado pra API.
+- Nota da avaliação: vai de 0,5 a 5,0 em passos de 0,5 (mesma regra do backend, `ck_reviews_nota_ou_texto` e `ck_reviews_rating`). Uma avaliação só com nota, ou só com texto, é válida. O banner calcula a média no front (`lib/rating.ts`) a partir de `GET /api/books/:id/reviews/`, porque o backend não devolve média pronta. Reviews sem nota não entram na conta e, sem nenhuma nota, a tela mostra "Sem notas ainda", nunca "0,0".
 
 ## Learn More
 

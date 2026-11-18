@@ -4,6 +4,10 @@ import { BookOpen, ChevronLeft } from "lucide-react";
 import { getBook } from "@/lib/api/books";
 import { ReviewList } from "@/components/features/review/ReviewList";
 import type { Book } from "@/types/book";
+import { listReviews } from "@/lib/api/reviews";
+import { StarRating } from "@/components/features/review/StarRating";
+import { calcularMedia, formatarNota } from "@/lib/rating";
+import type { Review } from "@/types/review";
 
 type LivroPageProps = {
   params: Promise<{ id: string }>;
@@ -25,6 +29,14 @@ export default async function LivroPage({ params }: LivroPageProps) {
     // do books.ts nao carrega o status HTTP pra distinguir os casos.
     notFound();
   }
+
+  // A media sai das reviews. Se a busca falhar, a pagina continua de pe,
+  // so sem a nota: quem mostra o erro e a lista de comentarios.
+  let reviews: Review[] = [];
+  try {
+    reviews = await listReviews(book.id);
+  } catch {}
+  const { media, total } = calcularMedia(reviews);
 
   // Genero e ano viram "etiquetas" na faixa do topo; o resto vai pra
   // ficha de detalhes. So aparece o que o livro realmente tem.
@@ -82,6 +94,24 @@ export default async function LivroPage({ params }: LivroPageProps) {
                 ))}
               </ul>
             )}
+                        <div className="flex items-center gap-2">
+              {media !== null ? (
+                <>
+                  <StarRating
+                    value={Math.round(media * 2) / 2}
+                    size={18}
+                    vazioClassName="text-white/30"
+                    cheioClassName="text-amber-300"
+                  />
+                  <span className="text-sm font-semibold">{formatarNota(media)}</span>
+                  <span className="text-sm text-blue-100">
+                    · {total} {total === 1 ? "nota" : "notas"}
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm text-blue-100">Sem notas ainda</span>
+              )}
+            </div>
           </div>
         </div>
       </header>
