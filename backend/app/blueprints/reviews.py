@@ -3,7 +3,8 @@ Rotas de avaliacoes (comentarios) de livros. So orquestra: chama o
 service, formata com o schema, devolve a resposta HTTP.
 
 Listar e publico (qualquer um le os comentarios de um livro). Criar
-exige login — qualquer usuario, nao so admin.
+exige login — qualquer usuario, nao so admin. Excluir exige login e
+so o autor consegue (403 para os outros, inclusive admin).
 """
 
 from flask import Blueprint, jsonify, request
@@ -14,7 +15,12 @@ from app.schemas.review_schema import (
     reviews_to_json_list,
     validate_review_payload,
 )
-from app.services.review_service import ReviewError, create_review, list_reviews
+from app.services.review_service import (
+    ReviewError,
+    create_review,
+    delete_review,
+    list_reviews,
+)
 
 bp = Blueprint("reviews", __name__)
 
@@ -46,3 +52,10 @@ def create_review_route(book_id: int):
 
     review = create_review(book_id, user_id=current_user.id, data=data)
     return jsonify(review_to_json(review)), 201
+
+
+@bp.delete("/reviews/<int:review_id>")
+@jwt_required()
+def delete_review_route(review_id: int):
+    delete_review(review_id, user_id=current_user.id)
+    return "", 204

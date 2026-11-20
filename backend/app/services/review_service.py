@@ -1,6 +1,6 @@
 """
-Logica de listagem e criacao de avaliacoes (comentario e/ou nota) de
-um livro.
+Logica de listagem, criacao e exclusao de avaliacoes (comentario e/ou
+nota) de um livro.
 """
 
 from sqlalchemy.exc import IntegrityError
@@ -53,3 +53,16 @@ def create_review(book_id: int, user_id: int, data: dict) -> Review:
         db.session.rollback()
         raise ReviewError("Voce ja avaliou este livro.", 409)
     return review
+
+
+def delete_review(review_id: int, user_id: int) -> None:
+    """So o autor apaga. A linha inteira sai: comentario e nota juntos,
+    e o usuario pode avaliar o livro de novo depois."""
+    review = db.session.get(Review, review_id)
+    if review is None:
+        raise ReviewError("Avaliacao nao encontrada.", 404)
+    if review.user_id != user_id:
+        raise ReviewError("Voce so pode excluir a sua propria avaliacao.", 403)
+
+    db.session.delete(review)
+    db.session.commit()
