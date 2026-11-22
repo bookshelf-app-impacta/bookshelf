@@ -1,7 +1,8 @@
 """
 Testes das rotas de comentarios — /api/books/<id>/reviews/ (listar e
-criar). As regras do corpo da requisicao ja estao em test_review.py;
-aqui o foco e o HTTP: auth, status e formato do JSON.
+criar) e /api/reviews/<id> (excluir). As regras do corpo da requisicao
+ja estao em test_review.py; aqui o foco e o HTTP: auth, status e
+formato do JSON.
 """
 
 import uuid
@@ -12,6 +13,7 @@ from sqlalchemy import func
 from app import create_app
 from app.extensions import db
 from app.models.book import Author, Book
+from app.models.review import Review
 from app.models.user import User
 
 ADMIN = {"email": "admin@bookshelf.local", "password": "admin123"}
@@ -176,5 +178,76 @@ def test_list_reviews_empty(client):
 
 def test_list_reviews_missing_book_returns_404(client):
     response = client.get(f"/api/books/{_missing_book_id()}/reviews/")
+
+    assert response.status_code == 404
+
+
+def _create_review(client, book_id: int, token: str) -> int:
+    response = client.post(
+        f"/api/books/{book_id}/reviews/",
+        json={"body": "Vou apagar"},
+        headers=_auth(token),
+    )
+    assert response.status_code == 201, response.get_json()
+    return response.get_json()["id"]
+
+
+def _missing_review_id() -> int:
+    return (db.session.query(func.max(Review.id)).scalar() or 0) + 1000
+
+
+def test_delete_review_by_author(client):
+    book = _make_book()
+    token = _login(client, REGULAR)
+    review_id = _create_review(client, book.id, token)
+
+    response = client.delete(f"/api/reviews/{review_id}", headers=_auth(token))
+
+    assert response.status_code == 204
+    assert response.data == b""
+    listed = client.get(f"/api/books/{book.id}/reviews/").get_json()
+    assert listed == []
+
+
+def test_delete_review_allows_reviewing_again(client):
+    book = _make_book()
+    token = _login(client, REGULAR)
+    review_id = _create_review(client, book.id, token)
+
+    client.delete(f"/api/reviews/{review_id}", headers=_auth(token))
+    again = client.post(
+        f"/api/books/{book.id}/reviews/", json={"body": "De novo"}, headers=_auth(token)
+    )
+
+    assert again.status_code == 201
+
+
+def test_delete_review_requires_login(client):
+    book = _make_book()
+    review_id = _create_review(client, book.id, _login(client, REGULAR))
+
+    response = client.delete(f"/api/reviews/{review_id}")
+
+    assert response.status_code == 401
+
+
+def test_delete_review_of_other_user_returns_403(client):
+    book = _make_book()
+    review_id = _create_review(client, book.id, _login(client, REGULAR))
+
+    response = client.delete(
+        f"/api/reviews/{review_id}", headers=_auth(_login(client, ADMIN))
+    )
+
+    assert response.status_code == 403
+    assert response.get_json()["error"]
+    listed = client.get(f"/api/books/{book.id}/reviews/").get_json()
+    assert [r["id"] for r in listed] == [review_id]
+
+
+def test_delete_review_missing_returns_404(client):
+    token = _login(client, REGULAR)
+
+    response = client.delete(f"/api/reviews/{_missing_review_id()}", headers=_auth(token))
 
     assert response.status_code == 404
